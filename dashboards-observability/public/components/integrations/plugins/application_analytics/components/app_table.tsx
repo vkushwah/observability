@@ -76,7 +76,7 @@ export function AppTable(props: AppTableProps) {
       ...parentBreadcrumbs,
       {
         text: 'Integrations',
-        href: '#/integrations/plugins/application_analytics',
+        href: '#/integrations/plugins',
       },
     ]);
     clear();

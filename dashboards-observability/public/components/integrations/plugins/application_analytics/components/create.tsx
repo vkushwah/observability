@@ -19,6 +19,7 @@ import {
   EuiPageContentHeaderSection,
   EuiPageHeader,
   EuiPageHeaderSection,
+  EuiPageSideBar,
   EuiSpacer,
   EuiTitle,
   EuiToolTip,
@@ -47,6 +48,7 @@ interface CreateAppProps extends AppAnalyticsComponentDeps {
   updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
   clearStorage: () => void;
   existingAppId: string;
+  appType: string | null;
 }
 
 export const CreateApp = (props: CreateAppProps) => {
@@ -67,11 +69,11 @@ export const CreateApp = (props: CreateAppProps) => {
     setFilters,
     clearStorage,
     existingAppId,
+    appType,
   } = props;
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   const [selectedServices, setSelectedServices] = useState<OptionType[]>([]);
   const [selectedTraces, setSelectedTraces] = useState<OptionType[]>([]);
-
   const editMode = existingAppId !== 'undefined';
   const [existingApp, setExistingApp] = useState<ApplicationType>({
     id: existingAppId,
@@ -91,7 +93,7 @@ export const CreateApp = (props: CreateAppProps) => {
       ...parentBreadcrumbs,
       {
         text: 'Integrations',
-        href: '#/integrations/plugins/application_analytics',
+        href: '#/integrations/plugins',
       },
       {
         text: 'All Integrations',
@@ -160,6 +162,7 @@ export const CreateApp = (props: CreateAppProps) => {
       traceGroups: selectedTraces.map((option) => option.label),
       panelId: '',
       availabilityVisId: '',
+      // appType: appType, TODO uncomment this when backend api is fixed to accept this new field
     };
     createApp(appData, type);
   };
@@ -180,103 +183,116 @@ export const CreateApp = (props: CreateAppProps) => {
   };
 
   return (
-    <div style={{ maxWidth: '1130px' }}>
-      <EuiPage>
-        <EuiPageBody component="div">
-          <EuiPageHeader>
-            <EuiPageHeaderSection>
-              <EuiTitle data-test-subj="createPageTitle" size="l">
-                <h1>{editMode ? 'Edit' : 'Create'} application</h1>
-              </EuiTitle>
-            </EuiPageHeaderSection>
-          </EuiPageHeader>
-          <EuiPageContent id="appInfo">
-            <EuiPageContentHeader>
-              <EuiPageContentHeaderSection>
-                <EuiTitle size="m">
-                  <h2>Application information</h2>
+    <>
+      <div>
+        <EuiPage>
+          <EuiPageBody component="div" style={{ maxWidth: '1130px' }}>
+            <EuiPageHeader>
+              <EuiPageHeaderSection>
+                <EuiTitle data-test-subj="createPageTitle" size="l">
+                  <h1>{editMode ? 'Edit' : 'Create'} application</h1>
                 </EuiTitle>
-              </EuiPageContentHeaderSection>
-            </EuiPageContentHeader>
-            <EuiHorizontalRule />
-            <EuiForm component="form">
-              <EuiFormRow label="Name" data-test-subj="nameFormRow">
-                <EuiFieldText
-                  name="name"
-                  value={name}
-                  onChange={(e) => setNameWithStorage(e.target.value)}
-                />
-              </EuiFormRow>
-              <EuiFormRow label="Description" data-test-subj="descriptionFormRow">
-                <EuiFieldText
-                  name="description"
-                  value={description}
-                  onChange={(e) => setDescriptionWithStorage(e.target.value)}
-                />
-              </EuiFormRow>
-            </EuiForm>
-          </EuiPageContent>
-          <EuiSpacer />
-          <EuiPageContent id="composition">
-            <EuiPageContentHeader>
-              <EuiPageContentHeaderSection>
-                <EuiTitle size="m">
-                  <h2>Composition</h2>
-                </EuiTitle>
-              </EuiPageContentHeaderSection>
-            </EuiPageContentHeader>
-            <EuiHorizontalRule />
-            <LogConfig editMode={editMode} setIsFlyoutVisible={setIsFlyoutVisible} {...props} />
-            <EuiHorizontalRule />
-            <ServiceConfig
-              selectedServices={selectedServices}
-              setSelectedServices={setSelectedServices}
-              {...props}
-            />
-            <EuiHorizontalRule />
-            <TraceConfig
-              selectedTraces={selectedTraces}
-              setSelectedTraces={setSelectedTraces}
-              {...props}
-            />
-          </EuiPageContent>
-          <EuiSpacer />
-          <EuiFlexGroup>
-            <EuiFlexItem grow={false}>
-              <EuiButton data-test-subj="cancelCreateButton" onClick={onCancel}>
-                Cancel
-              </EuiButton>
-            </EuiFlexItem>
-            <EuiFlexItem grow={false}>
-              <EuiToolTip position="top" content={missingField(false)}>
-                <EuiButton
-                  data-test-subj="createButton"
-                  isDisabled={isDisabled}
-                  onClick={editMode ? onUpdate : () => onCreate('create')}
-                  fill={editMode ? true : false}
-                >
-                  {editMode ? 'Save' : 'Create'}
-                </EuiButton>
-              </EuiToolTip>
-            </EuiFlexItem>
-            {editMode || (
+              </EuiPageHeaderSection>
+            </EuiPageHeader>
+            <EuiPageContent id="appInfo">
+              <EuiPageContentHeader>
+                <EuiPageContentHeaderSection>
+                  <EuiTitle size="m">
+                    <h2>Application information</h2>
+                  </EuiTitle>
+                </EuiPageContentHeaderSection>
+              </EuiPageContentHeader>
+              <EuiHorizontalRule />
+              <EuiForm component="form">
+                <EuiFormRow label="Name" data-test-subj="nameFormRow">
+                  <EuiFieldText
+                    name="name"
+                    value={name}
+                    onChange={(e) => setNameWithStorage(e.target.value)}
+                  />
+                </EuiFormRow>
+                <EuiFormRow label="Description" data-test-subj="descriptionFormRow">
+                  <EuiFieldText
+                    name="description"
+                    value={description}
+                    onChange={(e) => setDescriptionWithStorage(e.target.value)}
+                  />
+                </EuiFormRow>
+              </EuiForm>
+            </EuiPageContent>
+            <EuiSpacer />
+            <EuiPageContent id="composition">
+              <EuiPageContentHeader>
+                <EuiPageContentHeaderSection>
+                  <EuiTitle size="m">
+                    <h2>Composition</h2>
+                  </EuiTitle>
+                </EuiPageContentHeaderSection>
+              </EuiPageContentHeader>
+              <EuiHorizontalRule />
+              <LogConfig editMode={editMode} setIsFlyoutVisible={setIsFlyoutVisible} {...props} />
+              <EuiHorizontalRule />
+              <ServiceConfig
+                selectedServices={selectedServices}
+                setSelectedServices={setSelectedServices}
+                {...props}
+              />
+              <EuiHorizontalRule />
+              <TraceConfig
+                selectedTraces={selectedTraces}
+                setSelectedTraces={setSelectedTraces}
+                {...props}
+              />
+            </EuiPageContent>
+            <EuiSpacer />
+            <EuiFlexGroup>
               <EuiFlexItem grow={false}>
-                <EuiToolTip position="top" content={missingField(true)}>
+                <EuiButton data-test-subj="cancelCreateButton" onClick={onCancel}>
+                  Cancel
+                </EuiButton>
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiToolTip position="top" content={missingField(false)}>
                   <EuiButton
-                    data-test-subj="createAndSetButton"
-                    fill
-                    isDisabled={isDisabled || !query}
-                    onClick={() => onCreate('createSetAvailability')}
+                    data-test-subj="createButton"
+                    isDisabled={isDisabled}
+                    onClick={editMode ? onUpdate : () => onCreate('create')}
+                    fill={editMode ? true : false}
                   >
-                    Create and Set Availability
+                    {editMode ? 'Save' : 'Create'}
                   </EuiButton>
                 </EuiToolTip>
               </EuiFlexItem>
-            )}
-          </EuiFlexGroup>
-        </EuiPageBody>
-      </EuiPage>
-      {flyout}
-    </div>
+              {editMode || (
+                <EuiFlexItem grow={false}>
+                  <EuiToolTip position="top" content={missingField(true)}>
+                    <EuiButton
+                      data-test-subj="createAndSetButton"
+                      fill
+                      isDisabled={isDisabled || !query}
+                      onClick={() => onCreate('createSetAvailability')}
+                    >
+                      Create and Set Availability
+                    </EuiButton>
+                  </EuiToolTip>
+                </EuiFlexItem>
+              )}
+            </EuiFlexGroup>
+          </EuiPageBody>
+          {appType === 'integration' && (
+            <EuiPageBody component="div" style={{ maxWidth: '480px' }}>
+              <EuiPageHeader>
+                <EuiPageHeaderSection>
+                  <EuiTitle data-test-subj="createPageTitle" size="l">
+                    <h1>Document panel</h1>
+                  </EuiTitle>
+                </EuiPageHeaderSection>
+              </EuiPageHeader>
+            </EuiPageBody>
+          )}
+        </EuiPage>
+        {flyout}
+      </div>
+    </>
   );
 };

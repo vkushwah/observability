@@ -270,10 +270,10 @@ export function Application(props: AppDetailProps) {
   const childBreadcrumbs = [
     {
       text: 'Integrations',
-      href: '#/integrations/plugins/application_analytics',
+      href: '#/integrations/plugins',
     },
     {
-      text: `${application.name} dffd`,
+      text: `${application.name}`,
       href: `#/integrations/plugins/application_analytics/${appId}`,
     },
   ];

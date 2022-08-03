@@ -28,7 +28,7 @@ interface HomeProps extends RouteComponentProps, AppAnalyticsCoreDeps {
 
 export const Home = (props: TraceAnalyticsCoreDeps) => {
   const { parentBreadcrumbs, http, chrome } = props;
-  const eventAnalyticsBreadcrumb = {
+  const integrationsBreadcrumb = {
     text: 'Integration',
     href: '#/integrations/plugins',
   };
@@ -42,7 +42,7 @@ export const Home = (props: TraceAnalyticsCoreDeps) => {
           render={() => {
             chrome.setBreadcrumbs([
               ...parentBreadcrumbs,
-              eventAnalyticsBreadcrumb,
+              integrationsBreadcrumb,
               {
                 text: 'Home',
                 href: '#/integrations/plugins',
@@ -58,7 +58,9 @@ export const Home = (props: TraceAnalyticsCoreDeps) => {
         <Route
           exact
           path={['/integrations/plugins/all_apps']}
-          render={(routerProps) => <AllApps />}
+          render={(routerProps) => (
+            <AllApps parentBreadcrumbs={parentBreadcrumbs} http={http} chrome={chrome} />
+          )}
         />
         <Route
           exact

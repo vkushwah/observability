@@ -152,7 +152,7 @@ export const AppTable = () => {
       </EuiFlexItem>
     );
   });
-  // console.log('applications', applications);
+
   return (
     <div style={pageStyles}>
       <EuiPage>

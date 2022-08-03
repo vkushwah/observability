@@ -151,7 +151,9 @@ export const Home = (props: HomeProps) => {
   };
 
   const moveToApp = (id: string, type: string) => {
-    window.location.assign(`${last(parentBreadcrumbs)!.href}integrations/plugins/application_analytics/${id}`);
+    window.location.assign(
+      `${last(parentBreadcrumbs)!.href}integrations/plugins/application_analytics/${id}`
+    );
     if (type === 'createSetAvailability') {
       setTriggerSwitchToEvent(2);
     }
@@ -241,6 +243,7 @@ export const Home = (props: HomeProps) => {
 
   // Create a new application
   const createApp = (application: ApplicationRequestType, type: string) => {
+    // return false;
     const toast = isNameValid(
       application.name,
       applicationList.map((obj) => obj.name)
@@ -257,6 +260,7 @@ export const Home = (props: HomeProps) => {
       servicesEntities: application.servicesEntities,
       traceGroups: application.traceGroups,
       availabilityVisId: '',
+      // appType: application.appType, TODO uncomment this when backend api is fixed to accept this new field
     };
 
     return http
@@ -410,19 +414,24 @@ export const Home = (props: HomeProps) => {
           path={[
             '/integrations/plugins/application_analytics/create',
             '/integrations/plugins/application_analytics/edit/:id+',
+            '/integrations/plugins/application_analytics/create/:id+',
           ]}
-          render={(routerProps) => (
-            <CreateApp
-              dslService={dslService}
-              pplService={pplService}
-              createApp={createApp}
-              updateApp={updateApp}
-              setToasts={setToast}
-              clearStorage={clearStorage}
-              existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
-              {...commonProps}
-            />
-          )}
+          render={(routerProps) => {
+            const query = new URLSearchParams(routerProps.location.search);
+            return (
+              <CreateApp
+                dslService={dslService}
+                pplService={pplService}
+                createApp={createApp}
+                updateApp={updateApp}
+                setToasts={setToast}
+                clearStorage={clearStorage}
+                existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
+                appType={query.get('type')}
+                {...commonProps}
+              />
+            );
+          }}
         />
         <Route
           exact
@@ -446,7 +455,9 @@ export const Home = (props: HomeProps) => {
         <Route
           exact
           path={['/integrations/plugins/all_apps']}
-          render={(routerProps) => <AllApps />}
+          render={(routerProps) => (
+            <AllApps parentBreadcrumbs={parentBreadcrumbs} http={http} chrome={chrome} />
+          )}
         />
       </Switch>
     </div>

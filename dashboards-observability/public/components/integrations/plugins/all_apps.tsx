@@ -1,36 +1,3 @@
-// import React, { useState } from 'react';
-// import { Sql } from './sql/sql';
-// import { Nginx } from './nginx/nginx';
-// import { HashRouter, Link, Route, Switch } from 'react-router-dom';
-
-// export const Home = () => {
-//   const [test, setTest] = useState<string>('sql app');
-
-//   return (
-//     <div>
-//       <Switch>
-//         <Route
-//           exact
-//           path={'/integrations/plugins/Sql'}
-//           render={(props) => {
-//             return <Sql />;
-//           }}
-//         />
-//         <Route
-//           exact
-//           path={'/integrations/plugins/Nginx'}
-//           render={(props) => {
-//             return <Nginx />;
-//           }}
-//         />
-//         <Link to="/integrations/plugins/Sql">Sql </Link>
-//         <Link to="/integrations/plugins/Nginx">Nginx </Link>
-//         {/* <Sql />
-//         <Nginx /> */}
-//       </Switch>
-//     </div>
-//   );
-// };
 /*
  * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
@@ -69,13 +36,38 @@ import {
 import { ApplicationType, AvailabilityType } from '../../../../common/types/application_analytics';
 import _ from 'lodash';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { pageStyles, UI_DATE_FORMAT } from '../../../../common/constants/shared';
 import './app_analytics.scss';
+import { RouteComponentProps } from 'react-router-dom';
+import { TraceAnalyticsCoreDeps } from 'public/components/trace_analytics/home';
 // import { Sql } from '../../plugins/sql/sql';
 
-export function AllApps() {
+// interface HomeProps extends RouteComponentProps, TraceAnalyticsCoreDeps {
+//   pplService: PPLService;
+//   dslService: DSLService;
+//   savedObjects: SavedObjects;
+//   timestampUtils: TimestampUtils;
+//   notifications: NotificationsStart;
+// }
+
+export function AllApps(props: TraceAnalyticsCoreDeps) {
+  const { parentBreadcrumbs, http, chrome } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useEffect(() => {
+    chrome.setBreadcrumbs([
+      ...parentBreadcrumbs,
+      {
+        text: 'Integrations',
+        href: '#/integrations/plugins',
+      },
+      {
+        text: 'All Integrations',
+        href: '#/integrations/plugins/all_apps',
+      },
+    ]);
+  }, []);
 
   const closeModal = () => setIsModalVisible(false);
   const showModal = () => setIsModalVisible(true);
@@ -172,7 +164,7 @@ export function AllApps() {
     {
       name: 'Nginx',
       icon: 'Nginx',
-      path: 'nginx',
+      path: 'application_analytics/create?type=integration',
       description: 'Monitor connection and request metrics with NGINX',
     },
     {
@@ -203,7 +195,6 @@ export function AllApps() {
       </EuiFlexItem>
     );
   });
-  // console.log('applications', applications);
   return (
     <div style={pageStyles}>
       <EuiPage>
