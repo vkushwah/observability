@@ -38,6 +38,7 @@ import {
   CUSTOM_PANELS_API_PREFIX,
   CUSTOM_PANELS_DOCUMENTATION_URL,
 } from '../../../common/constants/custom_panels';
+import { AllApps } from '../integrations/plugins/all_apps';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -47,6 +48,7 @@ interface HomeProps extends RouteComponentProps, AppAnalyticsCoreDeps {
   savedObjects: SavedObjects;
   timestampUtils: TimestampUtils;
   notifications: NotificationsStart;
+  appType: string;
 }
 
 export interface AppAnalyticsComponentDeps extends TraceAnalyticsComponentDeps {
@@ -69,6 +71,7 @@ export const Home = (props: HomeProps) => {
     http,
     chrome,
     notifications,
+    appType,
   } = props;
   const [triggerSwitchToEvent, setTriggerSwitchToEvent] = useState(0);
   const dispatch = useDispatch();
@@ -256,6 +259,7 @@ export const Home = (props: HomeProps) => {
       servicesEntities: application.servicesEntities,
       traceGroups: application.traceGroups,
       availabilityVisId: '',
+      // appType: application.appType, TODO uncomment this when backend api is fixed to accept this new field
     };
 
     return http
@@ -388,7 +392,7 @@ export const Home = (props: HomeProps) => {
       <Switch>
         <Route
           exact
-          path={['/', '/application_analytics']}
+          path={['/', '/application_analytics', '/integrations', '/integrations/plugins']}
           render={() => (
             <ObservabilitySideBar>
               <AppTable
@@ -399,6 +403,7 @@ export const Home = (props: HomeProps) => {
                 deleteApplication={deleteApp}
                 clearStorage={clearStorage}
                 moveToApp={moveToApp}
+                appType={appType}
                 {...commonProps}
               />
             </ObservabilitySideBar>
@@ -406,23 +411,38 @@ export const Home = (props: HomeProps) => {
         />
         <Route
           exact
-          path={['/application_analytics/create', '/application_analytics/edit/:id+']}
+          path={[
+            '/application_analytics/create',
+            '/application_analytics/edit/:id+',
+            '/application_analytics/create/:id+',
+          ]}
+          render={(routerProps) => {
+            const query = new URLSearchParams(routerProps.location.search);
+            return (
+              <CreateApp
+                dslService={dslService}
+                pplService={pplService}
+                createApp={createApp}
+                updateApp={updateApp}
+                setToasts={setToast}
+                clearStorage={clearStorage}
+                existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
+                appType={query.get('type')}
+                {...commonProps}
+              />
+            );
+          }}
+        />
+        <Route
+          exact
+          path={['/integrations/plugins/all_apps']}
           render={(routerProps) => (
-            <CreateApp
-              dslService={dslService}
-              pplService={pplService}
-              createApp={createApp}
-              updateApp={updateApp}
-              setToasts={setToast}
-              clearStorage={clearStorage}
-              existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
-              {...commonProps}
-            />
+            <AllApps parentBreadcrumbs={parentBreadcrumbs} http={http} chrome={chrome} />
           )}
         />
         <Route
           exact
-          path={'/application_analytics/:id+'}
+          path={['/application_analytics/:id+', '/integrations/plugins/:id+']}
           render={(routerProps) => (
             <Application
               disabled={false}
@@ -435,6 +455,7 @@ export const Home = (props: HomeProps) => {
               setToasts={setToast}
               updateApp={updateApp}
               callback={callback}
+              appType={appType}
               {...commonProps}
             />
           )}

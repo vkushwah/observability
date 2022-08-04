@@ -86,6 +86,7 @@ interface AppDetailProps extends AppAnalyticsComponentDeps {
   savedObjects: SavedObjects;
   timestampUtils: TimestampUtils;
   notifications: NotificationsStart;
+  appType: string;
   updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
   callback: (childfunction: () => void) => void;
@@ -105,6 +106,7 @@ export function Application(props: AppDetailProps) {
     query,
     filters,
     appConfigs,
+    appType,
     updateApp,
     setAppConfigs,
     setToasts,
@@ -210,18 +212,33 @@ export function Application(props: AppDetailProps) {
     callback(switchToEvent);
   }, [appId]);
 
+  const breadCrumbs =
+    appType === 'integration'
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: application.name,
+            href: `${
+              last(parentBreadcrumbs)!.href
+            }integrations/plugins/${appId}`,
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+          {
+            text: application.name,
+            href: `${last(parentBreadcrumbs)!.href}application_analytics/${appId}`,
+          },
+        ];
+
   useEffect(() => {
-    chrome.setBreadcrumbs([
-      ...parentBreadcrumbs,
-      {
-        text: 'Application analytics',
-        href: '#/application_analytics',
-      },
-      {
-        text: application.name,
-        href: `${last(parentBreadcrumbs)!.href}application_analytics/${appId}`,
-      },
-    ]);
+    chrome.setBreadcrumbs([...parentBreadcrumbs, ...breadCrumbs]);
     setStartTimeForApp(sessionStorage.getItem(`${application.name}StartTime`) || 'now-24h');
     setEndTimeForApp(sessionStorage.getItem(`${application.name}EndTime`) || 'now');
   }, [appId, application.name]);
@@ -267,16 +284,28 @@ export function Application(props: AppDetailProps) {
     setTraceFlyoutId('');
   };
 
-  const childBreadcrumbs = [
-    {
-      text: 'Application analytics',
-      href: '#/application_analytics',
-    },
-    {
-      text: `${application.name}`,
-      href: `#/application_analytics/${appId}`,
-    },
-  ];
+  const childBreadcrumbs =
+    appType === 'integration'
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: `${application.name}`,
+            href: `#/integrations/plugins/application_analytics/${appId}`,
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+          {
+            text: `${application.name}`,
+            href: `#/application_analytics/${appId}`,
+          },
+        ];
 
   const getOverview = () => {
     return (

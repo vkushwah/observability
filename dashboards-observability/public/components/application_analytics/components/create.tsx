@@ -47,6 +47,7 @@ interface CreateAppProps extends AppAnalyticsComponentDeps {
   updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
   clearStorage: () => void;
   existingAppId: string;
+  appType: string | null;
 }
 
 export const CreateApp = (props: CreateAppProps) => {
@@ -67,6 +68,7 @@ export const CreateApp = (props: CreateAppProps) => {
     setFilters,
     clearStorage,
     existingAppId,
+    appType,
   } = props;
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   const [selectedServices, setSelectedServices] = useState<OptionType[]>([]);
@@ -86,13 +88,29 @@ export const CreateApp = (props: CreateAppProps) => {
     availability: { name: '', color: '', availabilityVisId: '' },
   });
 
+  const breadCrumbs =
+    appType === 'integration'
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: 'All Integrations',
+            href: '#/integrations/plugins/all_apps',
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+        ];
+
   useEffect(() => {
     chrome.setBreadcrumbs([
       ...parentBreadcrumbs,
-      {
-        text: 'Application analytics',
-        href: '#/application_analytics',
-      },
+      ...breadCrumbs,
       {
         text: editMode ? 'Edit' : 'Create',
         href: `#/application_analytics/${editMode ? 'edit' : 'create'}`,
@@ -156,6 +174,7 @@ export const CreateApp = (props: CreateAppProps) => {
       traceGroups: selectedTraces.map((option) => option.label),
       panelId: '',
       availabilityVisId: '',
+      // appType: appType, TODO uncomment this when backend api is fixed to accept this new field
     };
     createApp(appData, type);
   };
@@ -170,15 +189,17 @@ export const CreateApp = (props: CreateAppProps) => {
     updateApp(existingAppId, appData, 'update');
   };
 
+  const redirectOnCancel =
+    appType === 'integration' ? 'integrations/plugins' : 'application_analytics';
   const onCancel = () => {
     clearStorage();
-    window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics`);
+    window.location.assign(`${last(parentBreadcrumbs)!.href}${redirectOnCancel}`);
   };
 
   return (
-    <div style={{ maxWidth: '1130px' }}>
+    <div>
       <EuiPage>
-        <EuiPageBody component="div">
+        <EuiPageBody component="div" style={{ maxWidth: '980px' }}>
           <EuiPageHeader>
             <EuiPageHeaderSection>
               <EuiTitle data-test-subj="createPageTitle" size="l">
@@ -271,6 +292,17 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
+        {appType === 'integration' && (
+          <EuiPageBody component="div" style={{ maxWidth: '480px' }}>
+            <EuiPageHeader>
+              <EuiPageHeaderSection>
+                <EuiTitle data-test-subj="createPageTitle" size="l">
+                  <h1>Document panel</h1>
+                </EuiTitle>
+              </EuiPageHeaderSection>
+            </EuiPageHeader>
+          </EuiPageBody>
+        )}
       </EuiPage>
       {flyout}
     </div>
