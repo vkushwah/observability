@@ -12,6 +12,7 @@ import {
   EuiForm,
   EuiFormRow,
   EuiHorizontalRule,
+  EuiLink,
   EuiPage,
   EuiPageBody,
   EuiPageContent,
@@ -20,6 +21,7 @@ import {
   EuiPageHeader,
   EuiPageHeaderSection,
   EuiSpacer,
+  EuiText,
   EuiTitle,
   EuiToolTip,
 } from '@elastic/eui';
@@ -48,6 +50,7 @@ interface CreateAppProps extends AppAnalyticsComponentDeps {
   clearStorage: () => void;
   existingAppId: string;
   appType: string | null;
+  appName: string | null;
 }
 
 export const CreateApp = (props: CreateAppProps) => {
@@ -69,6 +72,7 @@ export const CreateApp = (props: CreateAppProps) => {
     clearStorage,
     existingAppId,
     appType,
+    appName,
   } = props;
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   const [selectedServices, setSelectedServices] = useState<OptionType[]>([]);
@@ -293,7 +297,7 @@ export const CreateApp = (props: CreateAppProps) => {
           </EuiFlexGroup>
         </EuiPageBody>
         {appType === 'integration' && (
-          <EuiPageBody component="div" style={{ maxWidth: '480px' }}>
+          <EuiPageBody component="div" style={{ maxWidth: '540px', marginLeft: '28px' }}>
             <EuiPageHeader>
               <EuiPageHeaderSection>
                 <EuiTitle data-test-subj="createPageTitle" size="l">
@@ -301,6 +305,28 @@ export const CreateApp = (props: CreateAppProps) => {
                 </EuiTitle>
               </EuiPageHeaderSection>
             </EuiPageHeader>
+            <EuiPageContent id="appInfo">
+              <EuiPageContentHeader>
+                <EuiPageContentHeaderSection>
+                  <EuiTitle size="m">
+                    <h2>{appName} information</h2>
+                  </EuiTitle>
+                </EuiPageContentHeaderSection>
+              </EuiPageContentHeader>
+              <EuiHorizontalRule />
+              <EuiText grow={false}>
+                NGINX is open source software for web serving, reverse proxying, caching, load
+                balancing, media streaming, and more. It started out as a web server designed for
+                maximum performance and stability. In addition to its HTTP server capabilities,
+                NGINX can also function as a proxy server for email (IMAP, POP3, and SMTP) and a
+                reverse proxy and load balancer for HTTP, TCP, and UDP servers.
+
+                
+              </EuiText>
+              <EuiLink href="https://www.nginx.com/resources/glossary/nginx/" target="_blank">
+                Click here to know more about NGINX
+              </EuiLink>
+            </EuiPageContent>
           </EuiPageBody>
         )}
       </EuiPage>

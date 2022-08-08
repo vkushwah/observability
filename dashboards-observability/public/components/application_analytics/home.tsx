@@ -428,6 +428,7 @@ export const Home = (props: HomeProps) => {
                 clearStorage={clearStorage}
                 existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
                 appType={query.get('type')}
+                appName={query.get('app')}
                 {...commonProps}
               />
             );
