@@ -40,7 +40,8 @@ export const useFetchVisualizations = ({
     handler: (res: any) => void
   ) => {
     setIsVisLoading(true);
-
+    debugger
+console.log('fetch visualization')
     await pplService
       .fetch({
         query,
@@ -81,6 +82,7 @@ export const useFetchVisualizations = ({
   const getVisualizations = () => {
     const cur = queriesRef.current;
     const rawQuery = cur![requestParams.tabId][FINAL_QUERY];
+    debugger
     fetchVisualizations(
       {
         query: rawQuery,

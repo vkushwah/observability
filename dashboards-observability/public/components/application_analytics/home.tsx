@@ -5,16 +5,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 
-import React, { ReactChild, useEffect, useState } from 'react';
+import React, { ReactChild, useEffect, useState, useRef } from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import DSLService from 'public/services/requests/dsl';
 import PPLService from 'public/services/requests/ppl';
 import SavedObjects from 'public/services/saved_objects/event_analytics/saved_objects';
 import TimestampUtils from 'public/services/timestamp/timestamp';
-import { EuiGlobalToastList, EuiLink } from '@elastic/eui';
+import { EuiGlobalToastList, EuiLink, EuiSelectOption } from '@elastic/eui';
 import { Toast } from '@elastic/eui/src/components/toast/global_toast_list';
 import { isEmpty, last } from 'lodash';
-import { useDispatch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
 import { AppTable } from './components/app_table';
 import { Application } from './components/application';
 import { CreateApp } from './components/create';
@@ -23,11 +23,19 @@ import { FilterType } from '../trace_analytics/components/common/filters/filters
 import { handleIndicesExistRequest } from '../trace_analytics/requests/request_handler';
 import { ObservabilitySideBar } from '../common/side_nav';
 import { NotificationsStart } from '../../../../../src/core/public';
+import { changeQuery } from '../event_analytics/redux/slices/query_slice';
+import { updateTabName } from '../event_analytics/redux/slices/query_tab_slice';
 import { APP_ANALYTICS_API_PREFIX } from '../../../common/constants/application_analytics';
 import {
   ApplicationRequestType,
   ApplicationType,
 } from '../../../common/types/application_analytics';
+import {
+  SAVED_OBJECT_ID,
+  SAVED_OBJECT_TYPE,
+  SAVED_QUERY,
+  SAVED_VISUALIZATION,
+} from '../../../common/constants/explorer';
 import {
   calculateAvailability,
   fetchPanelsVizIdList,
@@ -39,6 +47,7 @@ import {
   CUSTOM_PANELS_DOCUMENTATION_URL,
 } from '../../../common/constants/custom_panels';
 import { AllApps } from '../integrations/plugins/all_apps';
+import { fetchAppById } from '../application_analytics/helpers/utils';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -75,6 +84,7 @@ export const Home = (props: HomeProps) => {
   } = props;
   const [triggerSwitchToEvent, setTriggerSwitchToEvent] = useState(0);
   const dispatch = useDispatch();
+  const selectedPanelNameRef = useRef('');
   const [applicationList, setApplicationList] = useState<ApplicationType[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [indicesExist, setIndicesExist] = useState(true);
@@ -83,6 +93,21 @@ export const Home = (props: HomeProps) => {
   const [filters, setFilters] = useState<FilterType[]>(
     storedFilters ? JSON.parse(storedFilters) : []
   );
+  const [visWithAvailability, setVisWithAvailability] = useState<EuiSelectOption[]>([]);
+
+  const [application, setApplication] = useState<ApplicationType>({
+    id: '',
+    dateCreated: '',
+    dateModified: '',
+    name: '',
+    description: '',
+    baseQuery: '',
+    servicesEntities: [],
+    traceGroups: [],
+    panelId: '',
+    availability: { name: '', color: '', availabilityVisId: '' },
+  });
+
   const [name, setName] = useState(sessionStorage.getItem('AppAnalyticsName') || '');
   const [description, setDescription] = useState(
     sessionStorage.getItem('AppAnalyticsDescription') || ''
@@ -168,7 +193,7 @@ export const Home = (props: HomeProps) => {
         }),
       })
       .then((res) => {
-        updateApp(applicationId, { panelId: res.newPanelId }, type);
+        updateApp(applicationId, { panelId: res.newPanelId }, type, appName);
       })
       .catch((err) => {
         setToast(
@@ -241,8 +266,169 @@ export const Home = (props: HomeProps) => {
       });
   };
 
+  // tabid change
+  // const getSavedDataById = async (objectId: string) => {
+  //   // load saved query/visualization if object id exists
+  //   debugger;
+  //   await savedObjects
+  //     .fetchSavedObjects({
+  //       objectId,
+  //     })
+  //     .then(async (res) => {
+  //       const savedData = res.observabilityObjectList[0];
+  //       const isSavedQuery = has(savedData, SAVED_QUERY);
+  //       const savedType = isSavedQuery ? SAVED_QUERY : SAVED_VISUALIZATION;
+  //       const objectData = isSavedQuery ? savedData.savedQuery : savedData.savedVisualization;
+  //       const currQuery = appLogEvents
+  //         ? objectData?.query.replace(appBaseQuery + '| ', '')
+  //         : objectData?.query || '';
+
+  //       if (appLogEvents) {
+  //         debugger;
+  //         if (objectData?.selected_date_range?.start && objectData?.selected_date_range?.end) {
+  //           setStartTime(objectData.selected_date_range.start);
+  //           setEndTime(objectData.selected_date_range.end);
+  //         }
+  //       }
+
+  //       // update redux
+  //       batch(async () => {
+  //         await dispatch(
+  //           changeQuery({
+  //             tabId,
+  //             query: {
+  //               [RAW_QUERY]: currQuery,
+  //               [SELECTED_TIMESTAMP]: objectData?.selected_timestamp?.name || 'timestamp',
+  //               [SAVED_OBJECT_ID]: objectId,
+  //               [SAVED_OBJECT_TYPE]: savedType,
+  //               [SELECTED_DATE_RANGE]:
+  //                 objectData?.selected_date_range?.start && objectData?.selected_date_range?.end
+  //                   ? [objectData.selected_date_range.start, objectData.selected_date_range.end]
+  //                   : ['now-15m', 'now'],
+  //             },
+  //           })
+  //         );
+  //         await dispatch(
+  //           updateFields({
+  //             tabId,
+  //             data: {
+  //               [SELECTED_FIELDS]: [...objectData?.selected_fields?.tokens],
+  //             },
+  //           })
+  //         );
+  //         await dispatch(
+  //           updateTabName({
+  //             tabId,
+  //             tabName: objectData.name,
+  //           })
+  //         );
+  //         // fill saved user configs
+  //         if (objectData?.type) {
+  //           await dispatch(
+  //             updateVizConfig({
+  //               tabId,
+  //               vizId: objectData?.type,
+  //               data: JSON.parse(objectData.user_configs),
+  //             })
+  //           );
+  //         }
+  //       });
+
+  //       // update UI state with saved data
+  //       setSelectedPanelName(objectData?.name || '');
+  //       setCurVisId(objectData?.type || 'bar');
+  //       setTempQuery((staleTempQuery: string) => {
+  //         return appLogEvents ? currQuery : objectData?.query || staleTempQuery;
+  //       });
+  //       const tabToBeFocused = isSavedQuery
+  //         ? TYPE_TAB_MAPPING[SAVED_QUERY]
+  //         : TYPE_TAB_MAPPING[SAVED_VISUALIZATION];
+  //       setSelectedContentTab(tabToBeFocused);
+  //       await fetchData();
+  //     })
+  //     .catch((error) => {
+  //       notifications.toasts.addError(error, {
+  //         title: `Cannot get saved data for object id: ${objectId}`,
+  //       });
+  //     });
+  // };
+
+  // Add visualization to application's panel
+  const addVisualizationToPanel = async (
+    appId: string,
+    visualizationId: string,
+    panelId: string
+  ) => {
+    return http
+      .post(`${CUSTOM_PANELS_API_PREFIX}/visualizations`, {
+        body: JSON.stringify({
+          panelId,
+          savedVisualizationId: visualizationId,
+        }),
+      })
+      .then(() => {
+        fetchAppById(
+          http,
+          pplService,
+          appId,
+          setApplication,
+          setAppConfigs,
+          setVisWithAvailability,
+          setToasts
+        );
+      })
+      .catch((err) => {
+        setToasts(`Error in adding ${visualizationName} visualization to the panel`, 'danger');
+        console.error(err);
+      });
+  };
+  // need to move to common , copied from explorer
+  const handleSavingObject = (appId, appName, type, panelId) => {
+    // create new saved visualization
+    debugger;
+    savedObjects
+      .createSavedVisualization({
+        query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
+        fields: [],
+        dateRange: ['now/y', 'now'],
+        type: 'bar',
+        name: appName,
+        timestamp: 'timestamp',
+        applicationId: appId,
+        userConfigs: JSON.stringify({}),
+        description: '',
+      })
+      .then((res: any) => {
+        batch(() => {
+          addVisualizationToPanel(appId, res.objectId, panelId);
+          dispatch(
+            changeQuery({
+              undefined,
+              query: {
+                [SAVED_OBJECT_ID]: res.objectId,
+                [SAVED_OBJECT_TYPE]: SAVED_VISUALIZATION,
+              },
+            })
+          );
+          dispatch(
+            updateTabName({
+              undefined,
+              tabName: selectedPanelNameRef.current,
+            })
+          );
+        });
+        setToast('New visualization');
+        return res;
+      })
+      .catch((error: any) => {
+        notifications.toasts.addError(error, {
+          title: `Cannot save Visualization '${selectedPanelNameRef.current}'`,
+        });
+      });
+  };
+
   // Create a new application
-  const createApp = (application: ApplicationRequestType, type: string) => {
+  const createApp = async (application: ApplicationRequestType, type: string) => {
     const toast = isNameValid(
       application.name,
       applicationList.map((obj) => obj.name)
@@ -267,7 +453,10 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then(async (res) => {
+        debugger;
         createPanelForApp(res.newAppId, application.name, type);
+        const tabId = `application-analytics-tab-${appId}`;
+        initializeTabData(dispatch, tabId, NEW_TAB);
         setToast(`Application "${application.name}" successfully created!`);
         clearStorage();
       })
@@ -318,7 +507,8 @@ export const Home = (props: HomeProps) => {
   const updateApp = (
     appId: string,
     updateAppData: Partial<ApplicationRequestType>,
-    type: string
+    type: string,
+    appName: string
   ) => {
     const requestBody = {
       appId,
@@ -330,6 +520,9 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
+        // if (appType === 'integrations') {
+        handleSavingObject(appId, appName, type, updateAppData.panelId);
+        //  }
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();

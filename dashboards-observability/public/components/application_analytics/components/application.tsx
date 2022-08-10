@@ -181,6 +181,8 @@ export function Application(props: AppDetailProps) {
         }),
       })
       .then(() => {
+        debugger
+        console.log('hgguhgh');
         fetchAppById(
           http,
           pplService,
@@ -239,6 +241,7 @@ export function Application(props: AppDetailProps) {
 
   useEffect(() => {
     chrome.setBreadcrumbs([...parentBreadcrumbs, ...breadCrumbs]);
+    debugger
     setStartTimeForApp(sessionStorage.getItem(`${application.name}StartTime`) || 'now-24h');
     setEndTimeForApp(sessionStorage.getItem(`${application.name}EndTime`) || 'now');
   }, [appId, application.name]);
@@ -385,6 +388,7 @@ export function Application(props: AppDetailProps) {
   const getLog = () => {
     return (
       <Explorer
+        appType={appType}
         key={`explorer_application-analytics-tab`}
         pplService={pplService}
         dslService={dslService}

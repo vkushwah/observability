@@ -105,6 +105,7 @@ export const Explorer = ({
   setEndTime,
   callback,
   callbackInApp,
+  appType,
 }: IExplorerProps) => {
   const dispatch = useDispatch();
   const requestParams = { tabId };
@@ -141,7 +142,9 @@ export const Explorer = ({
   const [browserTabFocus, setBrowserTabFocus] = useState(true);
   const [liveTimestamp, setLiveTimestamp] = useState(DATE_PICKER_FORMAT);
   const [triggerAvailability, setTriggerAvailability] = useState(false);
-  const [isValidDataConfigOptionSelected, setIsValidDataConfigOptionSelected] = useState<Boolean>(false);
+  const [isValidDataConfigOptionSelected, setIsValidDataConfigOptionSelected] = useState<Boolean>(
+    false
+  );
 
   const queryRef = useRef();
   const appBasedRef = useRef('');
@@ -217,6 +220,7 @@ export const Explorer = ({
 
   const getSavedDataById = async (objectId: string) => {
     // load saved query/visualization if object id exists
+    debugger
     await savedObjects
       .fetchSavedObjects({
         objectId,
@@ -231,6 +235,7 @@ export const Explorer = ({
           : objectData?.query || '';
 
         if (appLogEvents) {
+          debugger
           if (objectData?.selected_date_range?.start && objectData?.selected_date_range?.end) {
             setStartTime(objectData.selected_date_range.start);
             setEndTime(objectData.selected_date_range.end);
@@ -317,6 +322,7 @@ export const Explorer = ({
     let curTimestamp: string = curQuery![SELECTED_TIMESTAMP];
 
     if (isEmpty(curTimestamp)) {
+      debugger
       const defaultTimestamp = await getDefaultTimestampByIndexPattern(curIndex);
       if (isEmpty(defaultTimestamp.default_timestamp)) {
         setToast(defaultTimestamp.message, 'danger');
@@ -332,7 +338,7 @@ export const Explorer = ({
       startingTime = curQuery![SELECTED_DATE_RANGE][0];
       endingTime = curQuery![SELECTED_DATE_RANGE][1];
     }
-
+debugger
     // compose final query
     const finalQuery = composeFinalQuery(
       curQuery,
@@ -427,6 +433,7 @@ export const Explorer = ({
       objectId = queryRef.current!.savedObjectId || savedObjectId;
     }
     if (objectId) {
+      debugger
       updateTabData(objectId);
     } else {
       fetchData();
@@ -729,7 +736,7 @@ export const Explorer = ({
   };
 
   const changeIsValidConfigOptionState = (isValidConfig: Boolean) =>
-  setIsValidDataConfigOptionSelected(isValidConfig);
+    setIsValidDataConfigOptionSelected(isValidConfig);
 
   const getExplorerVis = () => {
     return (
@@ -828,7 +835,55 @@ export const Explorer = ({
     setTempQuery(newQuery);
   };
 
+  // need to move to common , copied from explorer
+  const handleCreatingObject = () => {
+    // create new saved visualization
+    debugger;
+    savedObjects
+      .createSavedQuery({
+        query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
+        fields: [],
+        dateRange: ['now/y', 'now/y'],
+        type,
+        name: appName,
+        timestamp: 'timestamp',
+        applicationId: appId,
+        userConfigs: {},
+        description: '',
+      })
+      .then((res: any) => {
+        batch(() => {
+          addVisualizationToPanel(res.objectId, selectedPanelNameRef.current);
+          dispatch(
+            changeQuery({
+              undefined,
+              query: {
+                [SAVED_OBJECT_ID]: res.objectId,
+                [SAVED_OBJECT_TYPE]: SAVED_VISUALIZATION,
+              },
+            })
+          );
+          dispatch(
+            updateTabName({
+              undefined,
+              tabName: selectedPanelNameRef.current,
+            })
+          );
+        });
+        setToast('New visualization');
+        return res;
+      })
+      .catch((error: any) => {
+        notifications.toasts.addError(error, {
+          title: `Cannot save Visualization '${selectedPanelNameRef.current}'`,
+        });
+      });
+  };
   const handleSavingObject = async () => {
+    debugger;
+    // if (appType === 'integrations') {
+    //   handleCreatingObject(iAppId, iAppName, itype);
+    // } else {
     const currQuery = queryRef.current;
     const currFields = explorerFieldsRef.current;
     if (isEmpty(currQuery![RAW_QUERY]) && isEmpty(appBaseQuery)) {
@@ -1044,6 +1099,7 @@ export const Explorer = ({
           });
       }
     }
+    //}
   };
 
   const liveTailLoop = async (
@@ -1125,7 +1181,9 @@ export const Explorer = ({
     },
     [tempQuery]
   );
-
+console.log(appLogEvents)
+console.log(startTime)
+console.log(endTime)
   return (
     <TabContext.Provider
       value={{
