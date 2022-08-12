@@ -266,93 +266,6 @@ export const Home = (props: HomeProps) => {
       });
   };
 
-  // tabid change
-  // const getSavedDataById = async (objectId: string) => {
-  //   // load saved query/visualization if object id exists
-  //   debugger;
-  //   await savedObjects
-  //     .fetchSavedObjects({
-  //       objectId,
-  //     })
-  //     .then(async (res) => {
-  //       const savedData = res.observabilityObjectList[0];
-  //       const isSavedQuery = has(savedData, SAVED_QUERY);
-  //       const savedType = isSavedQuery ? SAVED_QUERY : SAVED_VISUALIZATION;
-  //       const objectData = isSavedQuery ? savedData.savedQuery : savedData.savedVisualization;
-  //       const currQuery = appLogEvents
-  //         ? objectData?.query.replace(appBaseQuery + '| ', '')
-  //         : objectData?.query || '';
-
-  //       if (appLogEvents) {
-  //         debugger;
-  //         if (objectData?.selected_date_range?.start && objectData?.selected_date_range?.end) {
-  //           setStartTime(objectData.selected_date_range.start);
-  //           setEndTime(objectData.selected_date_range.end);
-  //         }
-  //       }
-
-  //       // update redux
-  //       batch(async () => {
-  //         await dispatch(
-  //           changeQuery({
-  //             tabId,
-  //             query: {
-  //               [RAW_QUERY]: currQuery,
-  //               [SELECTED_TIMESTAMP]: objectData?.selected_timestamp?.name || 'timestamp',
-  //               [SAVED_OBJECT_ID]: objectId,
-  //               [SAVED_OBJECT_TYPE]: savedType,
-  //               [SELECTED_DATE_RANGE]:
-  //                 objectData?.selected_date_range?.start && objectData?.selected_date_range?.end
-  //                   ? [objectData.selected_date_range.start, objectData.selected_date_range.end]
-  //                   : ['now-15m', 'now'],
-  //             },
-  //           })
-  //         );
-  //         await dispatch(
-  //           updateFields({
-  //             tabId,
-  //             data: {
-  //               [SELECTED_FIELDS]: [...objectData?.selected_fields?.tokens],
-  //             },
-  //           })
-  //         );
-  //         await dispatch(
-  //           updateTabName({
-  //             tabId,
-  //             tabName: objectData.name,
-  //           })
-  //         );
-  //         // fill saved user configs
-  //         if (objectData?.type) {
-  //           await dispatch(
-  //             updateVizConfig({
-  //               tabId,
-  //               vizId: objectData?.type,
-  //               data: JSON.parse(objectData.user_configs),
-  //             })
-  //           );
-  //         }
-  //       });
-
-  //       // update UI state with saved data
-  //       setSelectedPanelName(objectData?.name || '');
-  //       setCurVisId(objectData?.type || 'bar');
-  //       setTempQuery((staleTempQuery: string) => {
-  //         return appLogEvents ? currQuery : objectData?.query || staleTempQuery;
-  //       });
-  //       const tabToBeFocused = isSavedQuery
-  //         ? TYPE_TAB_MAPPING[SAVED_QUERY]
-  //         : TYPE_TAB_MAPPING[SAVED_VISUALIZATION];
-  //       setSelectedContentTab(tabToBeFocused);
-  //       await fetchData();
-  //     })
-  //     .catch((error) => {
-  //       notifications.toasts.addError(error, {
-  //         title: `Cannot get saved data for object id: ${objectId}`,
-  //       });
-  //     });
-  // };
-
   // Add visualization to application's panel
   const addVisualizationToPanel = async (
     appId: string,
@@ -382,17 +295,23 @@ export const Home = (props: HomeProps) => {
         console.error(err);
       });
   };
+  const setStartTimeForApp = (appName: string, newStartTime: string) => {
+    sessionStorage.setItem(`${appName}StartTime`, newStartTime);
+  };
+  const setEndTimeForApp = (appName: string, newEndTime: string) => {
+    sessionStorage.setItem(`${appName}EndTime`, newEndTime);
+  };
+
   // need to move to common , copied from explorer
   const handleSavingObject = (appId, appName, type, panelId) => {
     // create new saved visualization
-    debugger;
     savedObjects
       .createSavedVisualization({
         query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
         fields: [],
         dateRange: ['now/y', 'now'],
         type: 'bar',
-        name: appName,
+        name: `bar chart ${appName} ${type}`,
         timestamp: 'timestamp',
         applicationId: appId,
         userConfigs: JSON.stringify({}),
@@ -401,6 +320,8 @@ export const Home = (props: HomeProps) => {
       .then((res: any) => {
         batch(() => {
           addVisualizationToPanel(appId, res.objectId, panelId);
+          setStartTimeForApp(appName, 'now/y');
+          setEndTimeForApp(appName, 'now');
           dispatch(
             changeQuery({
               undefined,
@@ -453,11 +374,10 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then(async (res) => {
-        debugger;
         createPanelForApp(res.newAppId, application.name, type);
-        const tabId = `application-analytics-tab-${appId}`;
-        initializeTabData(dispatch, tabId, NEW_TAB);
-        setToast(`Application "${application.name}" successfully created!`);
+        // const tabId = `application-analytics-tab-${appId}`;
+        // initializeTabData(dispatch, tabId, NEW_TAB);
+        // setToast(`Application "${application.name}" successfully created!`);
         clearStorage();
       })
       .catch((err) => {
@@ -522,7 +442,7 @@ export const Home = (props: HomeProps) => {
       .then((res) => {
         // if (appType === 'integrations') {
         handleSavingObject(appId, appName, type, updateAppData.panelId);
-        //  }
+        // }
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();

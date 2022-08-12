@@ -100,7 +100,6 @@ export const fetchAppById = async (
   return http
     .get(`${APP_ANALYTICS_API_PREFIX}/${applicationId}`)
     .then(async (res: ApplicationType) => {
-      debugger
       res.availability.availabilityVisId = (
         await calculateAvailability(
           http,
@@ -160,7 +159,6 @@ export const removeTabData = (
 // Create a new tab and initialize its data
 export const initializeTabData = async (dispatch: Dispatch<any>, tabId: string, where: string) => {
   await batch(() => {
-    debugger
     dispatch(initQuery({ tabId }));
     dispatch(initQueryResult({ tabId }));
     dispatch(initFields({ tabId }));

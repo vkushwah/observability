@@ -207,7 +207,6 @@ export default class SavedObjects {
       name: params.name,
       timestamp: params.timestamp,
     });
-debugger
     return await this.http.post(
       `${OBSERVABILITY_BASE}${EVENT_ANALYTICS}${SAVED_OBJECTS}${SAVED_QUERY}`,
       {

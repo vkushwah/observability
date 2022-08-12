@@ -181,8 +181,6 @@ export function Application(props: AppDetailProps) {
         }),
       })
       .then(() => {
-        debugger
-        console.log('hgguhgh');
         fetchAppById(
           http,
           pplService,
@@ -241,7 +239,6 @@ export function Application(props: AppDetailProps) {
 
   useEffect(() => {
     chrome.setBreadcrumbs([...parentBreadcrumbs, ...breadCrumbs]);
-    debugger
     setStartTimeForApp(sessionStorage.getItem(`${application.name}StartTime`) || 'now-24h');
     setEndTimeForApp(sessionStorage.getItem(`${application.name}EndTime`) || 'now');
   }, [appId, application.name]);

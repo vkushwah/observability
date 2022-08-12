@@ -220,7 +220,6 @@ export const Explorer = ({
 
   const getSavedDataById = async (objectId: string) => {
     // load saved query/visualization if object id exists
-    debugger
     await savedObjects
       .fetchSavedObjects({
         objectId,
@@ -235,7 +234,6 @@ export const Explorer = ({
           : objectData?.query || '';
 
         if (appLogEvents) {
-          debugger
           if (objectData?.selected_date_range?.start && objectData?.selected_date_range?.end) {
             setStartTime(objectData.selected_date_range.start);
             setEndTime(objectData.selected_date_range.end);
@@ -322,7 +320,6 @@ export const Explorer = ({
     let curTimestamp: string = curQuery![SELECTED_TIMESTAMP];
 
     if (isEmpty(curTimestamp)) {
-      debugger
       const defaultTimestamp = await getDefaultTimestampByIndexPattern(curIndex);
       if (isEmpty(defaultTimestamp.default_timestamp)) {
         setToast(defaultTimestamp.message, 'danger');
@@ -338,7 +335,6 @@ export const Explorer = ({
       startingTime = curQuery![SELECTED_DATE_RANGE][0];
       endingTime = curQuery![SELECTED_DATE_RANGE][1];
     }
-debugger
     // compose final query
     const finalQuery = composeFinalQuery(
       curQuery,
@@ -433,7 +429,6 @@ debugger
       objectId = queryRef.current!.savedObjectId || savedObjectId;
     }
     if (objectId) {
-      debugger
       updateTabData(objectId);
     } else {
       fetchData();
@@ -838,7 +833,6 @@ debugger
   // need to move to common , copied from explorer
   const handleCreatingObject = () => {
     // create new saved visualization
-    debugger;
     savedObjects
       .createSavedQuery({
         query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
@@ -880,7 +874,6 @@ debugger
       });
   };
   const handleSavingObject = async () => {
-    debugger;
     // if (appType === 'integrations') {
     //   handleCreatingObject(iAppId, iAppName, itype);
     // } else {
