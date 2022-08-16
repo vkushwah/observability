@@ -6,9 +6,12 @@
 
 import {
   EuiButton,
+  EuiButtonEmpty,
   EuiFieldText,
   EuiFlexGroup,
   EuiFlexItem,
+  EuiFlyoutBody,
+  EuiFlyoutFooter,
   EuiForm,
   EuiFormRow,
   EuiHorizontalRule,
@@ -40,12 +43,14 @@ import {
   OptionType,
 } from '../../../../common/types/application_analytics';
 import { fetchAppById } from '../helpers/utils';
+import { FlyoutContainers } from '../../common/flyout_containers';
+import { NginxDocument } from '../../integrations/plugins/nginx/doc';
 
 interface CreateAppProps extends AppAnalyticsComponentDeps {
   dslService: DSLService;
   pplService: PPLService;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
-  createApp: (app: ApplicationRequestType, type: string) => void;
+  createApp: (app: ApplicationRequestType, type: string, appType?: string | null) => void;
   updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
   clearStorage: () => void;
   existingAppId: string;
@@ -75,6 +80,7 @@ export const CreateApp = (props: CreateAppProps) => {
     appName,
   } = props;
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
+  const [isFlyoutVisibleIntegration, setIsFlyoutVisibleIntegration] = useState(false);
   const [selectedServices, setSelectedServices] = useState<OptionType[]>([]);
   const [selectedTraces, setSelectedTraces] = useState<OptionType[]>([]);
 
@@ -148,6 +154,65 @@ export const CreateApp = (props: CreateAppProps) => {
     setIsFlyoutVisible(false);
   };
 
+  const closeIntegrationFlyout = () => {
+    setIsFlyoutVisibleIntegration(false);
+  };
+
+  const openIntegrationFlyout = () => {
+    console.log('here');
+    setIsFlyoutVisibleIntegration(true);
+  };
+
+  let integrationFlyout;
+  if (isFlyoutVisibleIntegration) {
+    integrationFlyout = (
+      <FlyoutContainers
+        closeFlyout={closeIntegrationFlyout}
+        flyoutHeader={
+          <EuiPageHeader>
+            <EuiPageHeaderSection>
+              {/* <EuiTitle data-test-subj="createPageTitle" size="l">
+                <h1>{appName} Doc</h1>
+              </EuiTitle> */}
+            </EuiPageHeaderSection>
+          </EuiPageHeader>
+        }
+        flyoutBody={
+          <EuiPageContent id="appInfo">
+            <EuiPageContentHeader>
+              <EuiPageContentHeaderSection>
+                <EuiTitle size="m">
+                  <h2>{appName} information</h2>
+                </EuiTitle>
+              </EuiPageContentHeaderSection>
+            </EuiPageContentHeader>
+            <EuiHorizontalRule />
+            <EuiText grow={false}>
+              NGINX is open source software for web serving, reverse proxying, caching, load
+              balancing, media streaming, and more. It started out as a web server designed for
+              maximum performance and stability. In addition to its HTTP server capabilities, NGINX
+              can also function as a proxy server for email (IMAP, POP3, and SMTP) and a reverse
+              proxy and load balancer for HTTP, TCP, and UDP servers.
+            </EuiText>
+            <EuiLink href="https://www.nginx.com/resources/glossary/nginx/" target="_blank">
+              Click here to know more about NGINX
+            </EuiLink>
+          </EuiPageContent>
+        }
+        flyoutFooter={
+          <EuiFlyoutFooter>
+            <EuiFlexGroup gutterSize="s" justifyContent="spaceBetween">
+              <EuiFlexItem grow={false}>
+                <EuiButton onClick={closeIntegrationFlyout}>Close</EuiButton>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </EuiFlyoutFooter>
+        }
+        ariaLabel="pplReferenceFlyout"
+      />
+    );
+  }
+
   let flyout;
   if (isFlyoutVisible) {
     flyout = <PPLReferenceFlyout module="explorer" closeFlyout={closeFlyout} />;
@@ -180,7 +245,7 @@ export const CreateApp = (props: CreateAppProps) => {
       availabilityVisId: '',
       // appType: appType, TODO uncomment this when backend api is fixed to accept this new field
     };
-    createApp(appData, type);
+    createApp(appData, type, appType);
   };
 
   const onUpdate = () => {
@@ -296,40 +361,9 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
-        {appType === 'integration' && (
-          <EuiPageBody component="div" style={{ maxWidth: '540px', marginLeft: '28px' }}>
-            <EuiPageHeader>
-              <EuiPageHeaderSection>
-                <EuiTitle data-test-subj="createPageTitle" size="l">
-                  <h1>Document panel</h1>
-                </EuiTitle>
-              </EuiPageHeaderSection>
-            </EuiPageHeader>
-            <EuiPageContent id="appInfo">
-              <EuiPageContentHeader>
-                <EuiPageContentHeaderSection>
-                  <EuiTitle size="m">
-                    <h2>{appName} information</h2>
-                  </EuiTitle>
-                </EuiPageContentHeaderSection>
-              </EuiPageContentHeader>
-              <EuiHorizontalRule />
-              <EuiText grow={false}>
-                NGINX is open source software for web serving, reverse proxying, caching, load
-                balancing, media streaming, and more. It started out as a web server designed for
-                maximum performance and stability. In addition to its HTTP server capabilities,
-                NGINX can also function as a proxy server for email (IMAP, POP3, and SMTP) and a
-                reverse proxy and load balancer for HTTP, TCP, and UDP servers.
-
-                
-              </EuiText>
-              <EuiLink href="https://www.nginx.com/resources/glossary/nginx/" target="_blank">
-                Click here to know more about NGINX
-              </EuiLink>
-            </EuiPageContent>
-          </EuiPageBody>
-        )}
+        {appType === 'integration' && appName === 'Nginx' && <NginxDocument appName={appName} />}
       </EuiPage>
+      {integrationFlyout}
       {flyout}
     </div>
   );

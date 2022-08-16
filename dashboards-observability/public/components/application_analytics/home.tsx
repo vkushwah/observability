@@ -6,7 +6,7 @@
 /* eslint-disable no-console */
 
 import React, { ReactChild, useEffect, useState } from 'react';
-import { Route, RouteComponentProps, Switch } from 'react-router-dom';
+import { Route, RouteComponentProps, Switch, useParams } from 'react-router-dom';
 import DSLService from 'public/services/requests/dsl';
 import PPLService from 'public/services/requests/ppl';
 import SavedObjects from 'public/services/saved_objects/event_analytics/saved_objects';
@@ -152,14 +152,21 @@ export const Home = (props: HomeProps) => {
     setQueryWithStorage('');
   };
 
-  const moveToApp = (id: string, type: string) => {
-    window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics/${id}`);
+  const moveToApp = (id: string, type: string, appType?: string | null) => {
+    appType === 'integration'
+      ? window.location.assign(`${last(parentBreadcrumbs)!.href}integrations/plugins/${id}`)
+      : window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics/${id}`);
     if (type === 'createSetAvailability') {
       setTriggerSwitchToEvent(2);
     }
   };
 
-  const createPanelForApp = (applicationId: string, appName: string, type: string) => {
+  const createPanelForApp = (
+    applicationId: string,
+    appName: string,
+    type: string,
+    appType?: string | null
+  ) => {
     return http
       .post(`${CUSTOM_PANELS_API_PREFIX}/panels`, {
         body: JSON.stringify({
@@ -168,7 +175,7 @@ export const Home = (props: HomeProps) => {
         }),
       })
       .then((res) => {
-        updateApp(applicationId, { panelId: res.newPanelId }, type);
+        updateApp(applicationId, { panelId: res.newPanelId }, type, appType);
       })
       .catch((err) => {
         setToast(
@@ -242,7 +249,11 @@ export const Home = (props: HomeProps) => {
   };
 
   // Create a new application
-  const createApp = (application: ApplicationRequestType, type: string) => {
+  const createApp = (
+    application: ApplicationRequestType,
+    type: string,
+    appTypeIntegration?: string | null
+  ) => {
     const toast = isNameValid(
       application.name,
       applicationList.map((obj) => obj.name)
@@ -267,7 +278,7 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then(async (res) => {
-        createPanelForApp(res.newAppId, application.name, type);
+        createPanelForApp(res.newAppId, application.name, type, appTypeIntegration);
         setToast(`Application "${application.name}" successfully created!`);
         clearStorage();
       })
@@ -318,7 +329,8 @@ export const Home = (props: HomeProps) => {
   const updateApp = (
     appId: string,
     updateAppData: Partial<ApplicationRequestType>,
-    type: string
+    type: string,
+    appType?: string | null
   ) => {
     const requestBody = {
       appId,
@@ -333,10 +345,10 @@ export const Home = (props: HomeProps) => {
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();
-          moveToApp(res.updatedAppId, type);
+          moveToApp(res.updatedAppId, type, appType);
         }
         if (type.startsWith('create')) {
-          moveToApp(res.updatedAppId, type);
+          moveToApp(res.updatedAppId, type, appType);
         }
       })
       .catch((err) => {
