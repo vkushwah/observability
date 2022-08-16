@@ -385,6 +385,7 @@ export function Application(props: AppDetailProps) {
   const getLog = () => {
     return (
       <Explorer
+        appType={appType}
         key={`explorer_application-analytics-tab`}
         pplService={pplService}
         dslService={dslService}

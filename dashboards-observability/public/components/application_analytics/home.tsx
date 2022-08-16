@@ -5,16 +5,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 
-import React, { ReactChild, useEffect, useState } from 'react';
-import { Route, RouteComponentProps, Switch, useParams } from 'react-router-dom';
+import React, { ReactChild, useEffect, useState, useRef } from 'react';
+import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import DSLService from 'public/services/requests/dsl';
 import PPLService from 'public/services/requests/ppl';
 import SavedObjects from 'public/services/saved_objects/event_analytics/saved_objects';
 import TimestampUtils from 'public/services/timestamp/timestamp';
-import { EuiGlobalToastList, EuiLink } from '@elastic/eui';
+import { EuiGlobalToastList, EuiLink, EuiSelectOption } from '@elastic/eui';
 import { Toast } from '@elastic/eui/src/components/toast/global_toast_list';
 import { isEmpty, last } from 'lodash';
-import { useDispatch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
 import { AppTable } from './components/app_table';
 import { Application } from './components/application';
 import { CreateApp } from './components/create';
@@ -23,11 +23,19 @@ import { FilterType } from '../trace_analytics/components/common/filters/filters
 import { handleIndicesExistRequest } from '../trace_analytics/requests/request_handler';
 import { ObservabilitySideBar } from '../common/side_nav';
 import { NotificationsStart } from '../../../../../src/core/public';
+import { changeQuery } from '../event_analytics/redux/slices/query_slice';
+import { updateTabName } from '../event_analytics/redux/slices/query_tab_slice';
 import { APP_ANALYTICS_API_PREFIX } from '../../../common/constants/application_analytics';
 import {
   ApplicationRequestType,
   ApplicationType,
 } from '../../../common/types/application_analytics';
+import {
+  SAVED_OBJECT_ID,
+  SAVED_OBJECT_TYPE,
+  SAVED_QUERY,
+  SAVED_VISUALIZATION,
+} from '../../../common/constants/explorer';
 import {
   calculateAvailability,
   fetchPanelsVizIdList,
@@ -39,6 +47,7 @@ import {
   CUSTOM_PANELS_DOCUMENTATION_URL,
 } from '../../../common/constants/custom_panels';
 import { AllApps } from '../integrations/plugins/all_apps';
+import { fetchAppById } from '../application_analytics/helpers/utils';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -75,6 +84,7 @@ export const Home = (props: HomeProps) => {
   } = props;
   const [triggerSwitchToEvent, setTriggerSwitchToEvent] = useState(0);
   const dispatch = useDispatch();
+  const selectedPanelNameRef = useRef('');
   const [applicationList, setApplicationList] = useState<ApplicationType[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [indicesExist, setIndicesExist] = useState(true);
@@ -83,6 +93,21 @@ export const Home = (props: HomeProps) => {
   const [filters, setFilters] = useState<FilterType[]>(
     storedFilters ? JSON.parse(storedFilters) : []
   );
+  const [visWithAvailability, setVisWithAvailability] = useState<EuiSelectOption[]>([]);
+
+  const [application, setApplication] = useState<ApplicationType>({
+    id: '',
+    dateCreated: '',
+    dateModified: '',
+    name: '',
+    description: '',
+    baseQuery: '',
+    servicesEntities: [],
+    traceGroups: [],
+    panelId: '',
+    availability: { name: '', color: '', availabilityVisId: '' },
+  });
+
   const [name, setName] = useState(sessionStorage.getItem('AppAnalyticsName') || '');
   const [description, setDescription] = useState(
     sessionStorage.getItem('AppAnalyticsDescription') || ''
@@ -248,6 +273,88 @@ export const Home = (props: HomeProps) => {
       });
   };
 
+  // Add visualization to application's panel
+  const addVisualizationToPanel = async (
+    appId: string,
+    visualizationId: string,
+    panelId: string
+  ) => {
+    return http
+      .post(`${CUSTOM_PANELS_API_PREFIX}/visualizations`, {
+        body: JSON.stringify({
+          panelId,
+          savedVisualizationId: visualizationId,
+        }),
+      })
+      .then(() => {
+        fetchAppById(
+          http,
+          pplService,
+          appId,
+          setApplication,
+          setAppConfigs,
+          setVisWithAvailability,
+          setToasts,
+        );
+      })
+      .catch((err) => {
+        // setToasts(`Error in adding ${visualizationName} visualization to the panel`, 'danger');
+        console.error(err);
+      });
+  };
+  const setStartTimeForApp = (appName: string, newStartTime: string) => {
+    sessionStorage.setItem(`${appName}StartTime`, newStartTime);
+  };
+  const setEndTimeForApp = (appName: string, newEndTime: string) => {
+    sessionStorage.setItem(`${appName}EndTime`, newEndTime);
+  };
+
+  // need to move to common , copied from explorer
+  const handleSavingObject = (appId, appName, type, panelId) => {
+    // create new saved visualization
+    savedObjects
+      .createSavedVisualization({
+        query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
+        fields: [],
+        dateRange: ['now/y', 'now'],
+        type: 'bar',
+        name: `bar chart ${appName} ${type}`,
+        timestamp: 'timestamp',
+        applicationId: appId,
+        userConfigs: JSON.stringify({}),
+        description: '',
+      })
+      .then((res: any) => {
+        batch(() => {
+          addVisualizationToPanel(appId, res.objectId, panelId);
+          setStartTimeForApp(appName, 'now/y');
+          setEndTimeForApp(appName, 'now');
+          dispatch(
+            changeQuery({
+              undefined,
+              query: {
+                [SAVED_OBJECT_ID]: res.objectId,
+                [SAVED_OBJECT_TYPE]: SAVED_VISUALIZATION,
+              },
+            })
+          );
+          dispatch(
+            updateTabName({
+              undefined,
+              tabName: selectedPanelNameRef.current,
+            })
+          );
+        });
+        setToast('New visualization');
+        return res;
+      })
+      .catch((error: any) => {
+        notifications.toasts.addError(error, {
+          title: `Cannot save Visualization '${selectedPanelNameRef.current}'`,
+        });
+      });
+  };
+
   // Create a new application
   const createApp = (
     application: ApplicationRequestType,
@@ -279,7 +386,7 @@ export const Home = (props: HomeProps) => {
       })
       .then(async (res) => {
         createPanelForApp(res.newAppId, application.name, type, appTypeIntegration);
-        setToast(`Application "${application.name}" successfully created!`);
+        // setToast(`Application "${application.name}" successfully created!`);
         clearStorage();
       })
       .catch((err) => {
@@ -330,7 +437,8 @@ export const Home = (props: HomeProps) => {
     appId: string,
     updateAppData: Partial<ApplicationRequestType>,
     type: string,
-    appType?: string | null
+    appType?: string | null,
+    appName?: string
   ) => {
     const requestBody = {
       appId,
@@ -342,6 +450,9 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
+        // if (appType === 'integrations') {
+        handleSavingObject(appId, appName, type, updateAppData.panelId);
+        // }
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();
