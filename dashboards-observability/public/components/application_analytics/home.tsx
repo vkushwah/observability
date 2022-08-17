@@ -48,6 +48,7 @@ import {
 } from '../../../common/constants/custom_panels';
 import { AllApps } from '../integrations/plugins/all_apps';
 import { fetchAppById } from '../application_analytics/helpers/utils';
+import { ENABLED_VIS_TYPES } from '../../../common/constants/shared';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -200,7 +201,7 @@ export const Home = (props: HomeProps) => {
         }),
       })
       .then((res) => {
-        updateApp(applicationId, { panelId: res.newPanelId }, type, appType);
+        updateApp(applicationId, { panelId: res.newPanelId }, type, appName, appType);
       })
       .catch((err) => {
         setToast(
@@ -294,7 +295,7 @@ export const Home = (props: HomeProps) => {
           setApplication,
           setAppConfigs,
           setVisWithAvailability,
-          setToasts,
+          setToasts
         );
       })
       .catch((err) => {
@@ -310,15 +311,15 @@ export const Home = (props: HomeProps) => {
   };
 
   // need to move to common , copied from explorer
-  const handleSavingObject = (appId, appName, type, panelId) => {
+  const handleSavingObject = (appId, appName, type, panelId, chartType: string) => {
     // create new saved visualization
     savedObjects
       .createSavedVisualization({
         query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
         fields: [],
         dateRange: ['now/y', 'now'],
-        type: 'bar',
-        name: `bar chart ${appName} ${type}`,
+        type: chartType,
+        name: `${chartType} chart ${appName} ${type}`,
         timestamp: 'timestamp',
         applicationId: appId,
         userConfigs: JSON.stringify({}),
@@ -437,8 +438,8 @@ export const Home = (props: HomeProps) => {
     appId: string,
     updateAppData: Partial<ApplicationRequestType>,
     type: string,
-    appType?: string | null,
-    appName?: string
+    appName?: string,
+    appType?: string | null
   ) => {
     const requestBody = {
       appId,
@@ -450,9 +451,11 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
-        // if (appType === 'integrations') {
-        handleSavingObject(appId, appName, type, updateAppData.panelId);
-        // }
+        if (appType === 'integrations') {
+          for (let i = 0; i < ENABLED_VIS_TYPES.length; i++) {
+            handleSavingObject(appId, appName, type, updateAppData.panelId, ENABLED_VIS_TYPES[i]);
+          }
+        }
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();

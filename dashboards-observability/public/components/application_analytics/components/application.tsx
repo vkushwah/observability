@@ -87,7 +87,13 @@ interface AppDetailProps extends AppAnalyticsComponentDeps {
   timestampUtils: TimestampUtils;
   notifications: NotificationsStart;
   appType: string;
-  updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
+  updateApp: (
+    appId: string,
+    updateAppData: Partial<ApplicationRequestType>,
+    type: string,
+    appName?: string,
+    appType?: string | null
+  ) => void;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
   callback: (childfunction: () => void) => void;
 }
@@ -221,9 +227,7 @@ export function Application(props: AppDetailProps) {
           },
           {
             text: application.name,
-            href: `${
-              last(parentBreadcrumbs)!.href
-            }integrations/plugins/${appId}`,
+            href: `${last(parentBreadcrumbs)!.href}integrations/plugins/${appId}`,
           },
         ]
       : [

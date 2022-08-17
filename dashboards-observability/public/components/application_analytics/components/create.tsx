@@ -51,11 +51,17 @@ interface CreateAppProps extends AppAnalyticsComponentDeps {
   pplService: PPLService;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
   createApp: (app: ApplicationRequestType, type: string, appType?: string | null) => void;
-  updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
+  updateApp: (
+    appId: string,
+    updateAppData: Partial<ApplicationRequestType>,
+    type: string,
+    appName: string,
+    appType?: string | null
+  ) => void;
   clearStorage: () => void;
   existingAppId: string;
-  appType: string | null;
   appName: string | null;
+  appType: string | null;
 }
 
 export const CreateApp = (props: CreateAppProps) => {
@@ -255,7 +261,7 @@ export const CreateApp = (props: CreateAppProps) => {
       servicesEntities: selectedServices.map((option) => option.label),
       traceGroups: selectedTraces.map((option) => option.label),
     };
-    updateApp(existingAppId, appData, 'update');
+    updateApp(existingAppId, appData, 'update', appName, appType);
   };
 
   const redirectOnCancel =
