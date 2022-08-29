@@ -33,7 +33,6 @@ export function NginxDocument({ appName }: Props) {
   };
 
   const openIntegrationFlyout = () => {
-    console.log('here');
     setIsFlyoutVisibleIntegration(true);
   };
   let integrationFlyout;

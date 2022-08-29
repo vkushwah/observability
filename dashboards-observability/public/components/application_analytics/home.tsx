@@ -451,7 +451,8 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
-        if (appType === 'integrations') {
+        console.log('test', appType);
+        if (appType === 'integration') {
           for (let i = 0; i < ENABLED_VIS_TYPES.length; i++) {
             handleSavingObject(appId, appName, type, updateAppData.panelId, ENABLED_VIS_TYPES[i]);
           }

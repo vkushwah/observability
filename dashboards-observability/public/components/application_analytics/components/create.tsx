@@ -165,7 +165,6 @@ export const CreateApp = (props: CreateAppProps) => {
   };
 
   const openIntegrationFlyout = () => {
-    console.log('here');
     setIsFlyoutVisibleIntegration(true);
   };
 

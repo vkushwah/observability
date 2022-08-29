@@ -874,7 +874,7 @@ export const Explorer = ({
       });
   };
   const handleSavingObject = async () => {
-    // if (appType === 'integrations') {
+    // if (appType === 'integration') {
     //   handleCreatingObject(iAppId, iAppName, itype);
     // } else {
     const currQuery = queryRef.current;
@@ -1174,9 +1174,7 @@ export const Explorer = ({
     },
     [tempQuery]
   );
-console.log(appLogEvents)
-console.log(startTime)
-console.log(endTime)
+
   return (
     <TabContext.Provider
       value={{
