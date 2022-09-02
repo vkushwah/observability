@@ -75,6 +75,7 @@ import { SpanDetailFlyout } from '../../../../public/components/trace_analytics/
 import { TraceDetailFlyout } from './flyout_components/trace_detail_flyout';
 import { fetchAppById, initializeTabData } from '../helpers/utils';
 import { Tabs } from '../../integrations/plugins/nginx/tabs';
+import { INTEGRATION } from '../../../../common/constants/shared';
 
 const searchBarConfigs = {
   [TAB_EVENT_ID]: {
@@ -228,7 +229,7 @@ export function Application(props: AppDetailProps) {
   }, [appId]);
 
   const breadCrumbs =
-    appType === 'integration'
+    appType === INTEGRATION
       ? [
           {
             text: 'Integrations',
@@ -298,7 +299,7 @@ export function Application(props: AppDetailProps) {
   };
 
   const childBreadcrumbs =
-    appType === 'integration'
+    appType === INTEGRATION
       ? [
           {
             text: 'Integrations',
@@ -347,6 +348,7 @@ export function Application(props: AppDetailProps) {
           onAddClick={switchToEvent}
           onEditClick={onEditClick}
           tabId={tabId}
+          appType={appType}
         />
       </>
     );
@@ -491,6 +493,7 @@ export function Application(props: AppDetailProps) {
         updateAvailabilityVizId={updateAvailabilityVizId}
         startTime={appStartTime}
         endTime={appEndTime}
+        appType={appType}
         setStartTime={setStartTimeForApp}
         setEndTime={setEndTimeForApp}
         onAddClick={switchToEvent}
@@ -562,29 +565,9 @@ export function Application(props: AppDetailProps) {
   let appAnalyticsTabs;
   const integrationTabs = [
     getAppAnalyticsTab({
-      tabId: TAB_OVERVIEW_ID,
-      tabTitle: TAB_OVERVIEW_TITLE,
-      getContent: () => getOverview(),
-    }),
-    getAppAnalyticsTab({
       tabId: TAB_INTEGRATION_ID,
       tabTitle: TAB_INTEGRATION_TITLE,
       getContent: () => getNginxTab(TAB_INTEGRATION_ID),
-    }),
-    getAppAnalyticsTab({
-      tabId: TAB_UPSTREAM_ID,
-      tabTitle: TAB_UPSTREAM_TITLE,
-      getContent: () => getNginxTab(TAB_UPSTREAM_ID),
-    }),
-    getAppAnalyticsTab({
-      tabId: TAB_TCP_ZONES_ID,
-      tabTitle: TAB_TCP_ZONES_TITLE,
-      getContent: () => getNginxTab(TAB_TCP_ZONES_ID),
-    }),
-    getAppAnalyticsTab({
-      tabId: TAB_TCP_UPSTREAMS_ID,
-      tabTitle: TAB_TCP_UPSTREAMS_TITLE,
-      getContent: () => getNginxTab(TAB_TCP_UPSTREAMS_ID),
     }),
     getAppAnalyticsTab({
       tabId: TAB_LOG_ID,
@@ -635,8 +618,8 @@ export function Application(props: AppDetailProps) {
     }),
   ];
 
-  appAnalyticsTabs = appType === 'integration' ? integrationTabs : analyticsTabs;
-  console.log('integrationTabs', integrationTabs);
+  appAnalyticsTabs = appType === INTEGRATION ? integrationTabs : analyticsTabs;
+
   return (
     <div>
       <EuiPage>

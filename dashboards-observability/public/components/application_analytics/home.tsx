@@ -48,7 +48,7 @@ import {
 } from '../../../common/constants/custom_panels';
 import { AllApps } from '../integrations/plugins/all_apps';
 import { fetchAppById } from '../application_analytics/helpers/utils';
-import { ENABLED_VIS_TYPES } from '../../../common/constants/shared';
+import { ENABLED_VIS_TYPES, INTEGRATION } from '../../../common/constants/shared';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -179,7 +179,7 @@ export const Home = (props: HomeProps) => {
   };
 
   const moveToApp = (id: string, type: string, appType?: string | null) => {
-    appType === 'integration'
+    appType === INTEGRATION
       ? window.location.assign(`${last(parentBreadcrumbs)!.href}integrations/plugins/${id}`)
       : window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics/${id}`);
     if (type === 'createSetAvailability') {
@@ -315,7 +315,8 @@ export const Home = (props: HomeProps) => {
     // create new saved visualization
     savedObjects
       .createSavedVisualization({
-        query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
+        query:
+          'source = nginx_2 | stats avg( upstream_response_time )as Response_Time , count() as responseCount by span( @timestamp ,1h)',
         fields: [],
         dateRange: ['now/y', 'now'],
         type: chartType,
@@ -451,8 +452,7 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
-        console.log('test', appType);
-        if (appType === 'integration') {
+        if (appType === INTEGRATION) {
           for (let i = 0; i < ENABLED_VIS_TYPES.length; i++) {
             handleSavingObject(appId, appName, type, updateAppData.panelId, ENABLED_VIS_TYPES[i]);
           }

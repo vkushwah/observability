@@ -113,6 +113,7 @@ interface CustomPanelViewProps {
   updateAvailabilityVizId?: any;
   onAddClick?: any;
   tabId?: string;
+  appType: string;
 }
 
 export const Tabs = (props: CustomPanelViewProps) => {
@@ -132,6 +133,7 @@ export const Tabs = (props: CustomPanelViewProps) => {
     setEndTime,
     updateAvailabilityVizId,
     tabId,
+    appType,
     renameCustomPanel,
     deleteCustomPanel,
     cloneCustomPanel,
@@ -662,6 +664,7 @@ export const Tabs = (props: CustomPanelViewProps) => {
               showFlyout={showFlyout}
               editActionType={editActionType}
               onEditClick={onEditClick}
+              appType={appType}
             />
           </EuiPageContentBody>
         </EuiPageBody>

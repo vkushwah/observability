@@ -8,7 +8,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import { CoreStart } from '../../../../src/core/public';
-import { observabilityID, observabilityTitle } from '../../common/constants/shared';
+import { INTEGRATION, observabilityID, observabilityTitle } from '../../common/constants/shared';
 import store from '../framework/redux/store';
 import { AppPluginStartDependencies } from '../types';
 // import { Home as ApplicationAnalyticsHome } from './integrations/plugins/application_analytics/home';
@@ -57,7 +57,7 @@ export const App = ({
         <I18nProvider>
           <>
             <Switch>
-            <Route
+              <Route
                 path={'/application_analytics'}
                 render={(props) => {
                   return (
@@ -90,7 +90,7 @@ export const App = ({
                       dslService={dslService}
                       savedObjects={savedObjects}
                       timestampUtils={timestampUtils}
-                      appType={'integration'}
+                      appType={INTEGRATION}
                     />
                   );
                 }}

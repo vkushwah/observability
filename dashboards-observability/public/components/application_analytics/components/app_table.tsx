@@ -37,7 +37,7 @@ import moment from 'moment';
 import { DeleteModal } from '../../common/helpers/delete_modal';
 import { AppAnalyticsComponentDeps } from '../home';
 import { getCustomModal } from '../../custom_panels/helpers/modal_containers';
-import { pageStyles, UI_DATE_FORMAT } from '../../../../common/constants/shared';
+import { INTEGRATION, pageStyles, UI_DATE_FORMAT } from '../../../../common/constants/shared';
 import { ApplicationType, AvailabilityType } from '../../../../common/types/application_analytics';
 
 interface AppTableProps extends AppAnalyticsComponentDeps {
@@ -68,9 +68,9 @@ export function AppTable(props: AppTableProps) {
   const [isActionsPopoverOpen, setIsActionsPopoverOpen] = useState(false);
   const [modalLayout, setModalLayout] = useState(<EuiOverlayMask />);
   const [selectedApplications, setSelectedApplications] = useState<ApplicationType[]>([]);
-  const createButtonText = appType === 'integration' ? 'Add Integration' : 'Create application';
+  const createButtonText = appType === INTEGRATION ? 'Add Integration' : 'Create application';
   const breadCrumbs =
-    appType === 'integration'
+    appType === INTEGRATION
       ? {
           text: 'Integrations',
           href: '#/integrations/plugins',
@@ -218,8 +218,7 @@ export function AppTable(props: AppTableProps) {
     }
   };
 
-  const appLink =
-    appType === 'integration' ? '#/integrations/plugins/' : '#/application_analytics/';
+  const appLink = appType === INTEGRATION ? '#/integrations/plugins/' : '#/application_analytics/';
   const tableColumns = [
     {
       field: 'name',
@@ -260,9 +259,7 @@ export function AppTable(props: AppTableProps) {
   ] as Array<EuiTableFieldDataColumnType<ApplicationType>>;
 
   const allApps =
-    appType === 'integration'
-      ? '#/integrations/plugins/all_apps'
-      : '#/application_analytics/create';
+    appType === INTEGRATION ? '#/integrations/plugins/all_apps' : '#/application_analytics/create';
 
   return (
     <div style={pageStyles}>
@@ -271,14 +268,14 @@ export function AppTable(props: AppTableProps) {
           <EuiPageHeader>
             <EuiPageHeaderSection>
               <EuiTitle size="l">
-                {appType === 'integration' ? <h1>Integrations</h1> : <h1>Overview</h1>}
+                {appType === INTEGRATION ? <h1>Integrations</h1> : <h1>Overview</h1>}
               </EuiTitle>
             </EuiPageHeaderSection>
           </EuiPageHeader>
           <EuiPageContent id="applicationArea">
             <EuiPageContentHeader>
               <EuiPageContentHeaderSection>
-                {appType !== 'integration' && (
+                {appType !== INTEGRATION && (
                   <EuiTitle data-test-subj="applicationHomePageTitle" size="s">
                     <h3>
                       Applications

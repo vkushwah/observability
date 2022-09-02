@@ -13,3 +13,14 @@
   min-width: 100%;
   max-width: 100%;
 }
+
+.height {
+  height: 630px;
+  display: 'inline-grid';
+}
+
+.euiFlexItem .height {
+  .euiPanel .euiPanel--plain {
+    height: 630px;
+  }
+}

@@ -170,3 +170,5 @@ export const DefaultChartStyles: DefaultChartStylesProps = {
 }
 
 export const FILLOPACITY_DIV_FACTOR = 200; 
+
+export const INTEGRATION = 'integration';

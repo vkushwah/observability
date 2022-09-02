@@ -45,6 +45,7 @@ import {
 import { fetchAppById } from '../helpers/utils';
 import { FlyoutContainers } from '../../common/flyout_containers';
 import { NginxDocument } from '../../integrations/plugins/nginx/doc';
+import { INTEGRATION } from '../../../../common/constants/shared';
 
 interface CreateAppProps extends AppAnalyticsComponentDeps {
   dslService: DSLService;
@@ -105,7 +106,7 @@ export const CreateApp = (props: CreateAppProps) => {
   });
 
   const breadCrumbs =
-    appType === 'integration'
+    appType === INTEGRATION
       ? [
           {
             text: 'Integrations',
@@ -264,7 +265,7 @@ export const CreateApp = (props: CreateAppProps) => {
   };
 
   const redirectOnCancel =
-    appType === 'integration' ? 'integrations/plugins' : 'application_analytics';
+    appType === INTEGRATION ? 'integrations/plugins' : 'application_analytics';
   const onCancel = () => {
     clearStorage();
     window.location.assign(`${last(parentBreadcrumbs)!.href}${redirectOnCancel}`);
@@ -366,7 +367,7 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
-        {appType === 'integration' && appName === 'Nginx' && <NginxDocument appName={appName} />}
+        {appType === INTEGRATION && appName === 'Nginx' && <NginxDocument appName={appName} />}
       </EuiPage>
       {integrationFlyout}
       {flyout}

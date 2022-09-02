@@ -48,7 +48,7 @@ import {
   isPPLFilterValid,
   fetchVisualizationById,
 } from './helpers/utils';
-import { UI_DATE_FORMAT } from '../../../common/constants/shared';
+import { INTEGRATION, UI_DATE_FORMAT } from '../../../common/constants/shared';
 import { VisaulizationFlyout } from './panel_modules/visualization_flyout';
 import { uiSettingsService } from '../../../common/utils';
 import { PPLReferenceFlyout } from '../common/helpers';
@@ -112,6 +112,7 @@ interface CustomPanelViewProps {
   appId?: string;
   updateAvailabilityVizId?: any;
   onAddClick?: any;
+  appType?: string;
 }
 
 export const CustomPanelView = (props: CustomPanelViewProps) => {
@@ -136,6 +137,7 @@ export const CustomPanelView = (props: CustomPanelViewProps) => {
     setToast,
     onEditClick,
     onAddClick,
+    appType,
   } = props;
   const [openPanelName, setOpenPanelName] = useState('');
   const [panelCreatedTime, setPanelCreatedTime] = useState('');
@@ -583,34 +585,36 @@ export const CustomPanelView = (props: CustomPanelViewProps) => {
           </EuiPageHeader>
           <EuiPageContentBody>
             <EuiFlexGroup gutterSize="s">
-              <EuiFlexItem>
-                <Autocomplete
-                  key={'autocomplete-search-bar'}
-                  query={pplFilterValue}
-                  tempQuery={pplFilterValue}
-                  baseQuery={baseQuery}
-                  handleQueryChange={handleQueryChange}
-                  handleQuerySearch={() => onRefreshFilters(startTime, endTime)}
-                  dslService={dslService}
-                  getSuggestions={parseGetSuggestions}
-                  onItemSelect={onItemSelect}
-                  isDisabled={inputDisabled}
-                  tabId={'panels-filter'}
-                  placeholder={
-                    "Use PPL 'where' clauses to add filters on all visualizations [where Carrier = 'OpenSearch-Air']"
-                  }
-                  possibleCommands={[{ label: 'where' }]}
-                  append={
-                    <EuiLink
-                      aria-label="ppl-info"
-                      onClick={showHelpFlyout}
-                      style={{ padding: '10px' }}
-                    >
-                      PPL
-                    </EuiLink>
-                  }
-                />
-              </EuiFlexItem>
+              {appType !== INTEGRATION && (
+                <EuiFlexItem>
+                  <Autocomplete
+                    key={'autocomplete-search-bar'}
+                    query={pplFilterValue}
+                    tempQuery={pplFilterValue}
+                    baseQuery={baseQuery}
+                    handleQueryChange={handleQueryChange}
+                    handleQuerySearch={() => onRefreshFilters(startTime, endTime)}
+                    dslService={dslService}
+                    getSuggestions={parseGetSuggestions}
+                    onItemSelect={onItemSelect}
+                    isDisabled={inputDisabled}
+                    tabId={'panels-filter'}
+                    placeholder={
+                      "Use PPL 'where' clauses to add filters on all visualizations [where Carrier = 'OpenSearch-Air']"
+                    }
+                    possibleCommands={[{ label: 'where' }]}
+                    append={
+                      <EuiLink
+                        aria-label="ppl-info"
+                        onClick={showHelpFlyout}
+                        style={{ padding: '10px' }}
+                      >
+                        PPL
+                      </EuiLink>
+                    }
+                  />
+                </EuiFlexItem>
+              )}
               <EuiFlexItem grow={false}>
                 <EuiSuperDatePicker
                   dateFormat={uiSettingsService.get('dateFormat')}

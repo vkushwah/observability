@@ -57,6 +57,7 @@ import {
   PPL_NEWLINE_REGEX,
   LIVE_OPTIONS,
   LIVE_END_TIME,
+  INTEGRATION,
 } from '../../../../common/constants/shared';
 import { getIndexPatternFromRawQuery, preprocessQuery, buildQuery } from '../../../../common/utils';
 import { useFetchEvents, useFetchVisualizations } from '../hooks';
@@ -752,7 +753,17 @@ export const Explorer = ({
     );
   };
 
-  const getMainContentTabs = () => {
+  const integrationTab = () => {
+    return [
+      getMainContentTab({
+        tabID: TAB_EVENT_ID,
+        tabTitle: TAB_EVENT_TITLE,
+        getContent: () => getMainContent(),
+      }),
+    ];
+  };
+
+  const getApplicationTab = () => {
     return [
       getMainContentTab({
         tabID: TAB_EVENT_ID,
@@ -768,7 +779,7 @@ export const Explorer = ({
   };
 
   const memorizedMainContentTabs = useMemo(() => {
-    return getMainContentTabs();
+    return appType === INTEGRATION ? integrationTab() : getApplicationTab();
   }, [
     curVisId,
     isPanelTextFieldInvalid,
@@ -874,7 +885,7 @@ export const Explorer = ({
       });
   };
   const handleSavingObject = async () => {
-    // if (appType === 'integration') {
+    // if (appType === INTEGRATION) {
     //   handleCreatingObject(iAppId, iAppName, itype);
     // } else {
     const currQuery = queryRef.current;

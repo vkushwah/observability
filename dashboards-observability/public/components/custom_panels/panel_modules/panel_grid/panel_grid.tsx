@@ -16,6 +16,8 @@ import { VisualizationType } from '../../../../../common/types/custom_panels';
 import { CUSTOM_PANELS_API_PREFIX } from '../../../../../common/constants/custom_panels';
 import './panel_grid.scss';
 import { mergeLayoutAndVisualizations } from '../../helpers/utils';
+import { EuiFlexGrid, EuiFlexGroup, EuiFlexItem } from '@elastic/eui';
+import { INTEGRATION } from '../../../../../common/constants/shared';
 
 // HOC container to provide dynamic width for Grid layout
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -59,6 +61,7 @@ interface PanelGridProps {
   showFlyout: (isReplacement?: boolean | undefined, replaceVizId?: string | undefined) => void;
   editActionType: string;
   setEditVizId?: any;
+  appType?: string;
 }
 
 export const PanelGrid = (props: PanelGridProps) => {
@@ -79,6 +82,7 @@ export const PanelGrid = (props: PanelGridProps) => {
     pplFilterValue,
     showFlyout,
     editActionType,
+    appType,
   } = props;
   const [currentLayout, setCurrentLayout] = useState<Layout[]>([]);
   const [postEditLayout, setPostEditLayout] = useState<Layout[]>([]);
@@ -196,17 +200,30 @@ export const PanelGrid = (props: PanelGridProps) => {
     loadVizComponents();
   }, []);
 
-  return (
-    <ResponsiveGridLayout
-      layouts={{ lg: currentLayout, md: currentLayout, sm: currentLayout }}
-      className="layout full-width"
-      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
-      onLayoutChange={layoutChanged}
-    >
-      {panelVisualizations.map((panelVisualization: VisualizationType, index) => (
-        <div key={panelVisualization.id}>{gridData[index]}</div>
-      ))}
-    </ResponsiveGridLayout>
-  );
+  const visualizationData =
+    appType === INTEGRATION ? (
+      <EuiFlexGrid columns={2} direction="column">
+        {panelVisualizations.map((panelVisualization: VisualizationType, index) => (
+          <EuiFlexItem>
+            <div className="height" key={panelVisualization.id}>
+              {gridData[index]}
+            </div>
+          </EuiFlexItem>
+        ))}
+      </EuiFlexGrid>
+    ) : (
+      <ResponsiveGridLayout
+        layouts={{ lg: currentLayout, md: currentLayout, sm: currentLayout }}
+        className="layout full-width"
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
+        onLayoutChange={layoutChanged}
+      >
+        {panelVisualizations.map((panelVisualization: VisualizationType, index) => (
+          <div key={panelVisualization.id}>{gridData[index]}</div>
+        ))}
+      </ResponsiveGridLayout>
+    );
+
+  return visualizationData;
 };
