@@ -295,7 +295,7 @@ export const Home = (props: HomeProps) => {
           setApplication,
           setAppConfigs,
           setVisWithAvailability,
-          setToasts
+          setToasts,
         );
       })
       .catch((err) => {

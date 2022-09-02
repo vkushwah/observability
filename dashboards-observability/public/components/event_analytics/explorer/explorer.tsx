@@ -760,6 +760,11 @@ export const Explorer = ({
         tabTitle: TAB_EVENT_TITLE,
         getContent: () => getMainContent(),
       }),
+      getMainContentTab({
+        tabID: TAB_CHART_ID,
+        tabTitle: TAB_CHART_TITLE,
+        getContent: () => getExplorerVis(),
+      }),
     ];
   };
 
