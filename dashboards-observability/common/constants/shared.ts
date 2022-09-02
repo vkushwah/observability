@@ -72,7 +72,6 @@ export const pageStyles: CSS.Properties = {
   maxWidth: '1130px',
 };
 
-
 export enum visChartTypes {
   Bar = 'bar',
   HorizontalBar = 'horizontal_bar',
@@ -82,13 +81,13 @@ export enum visChartTypes {
   Text = 'text',
   Gauge = 'gauge',
   Histogram = 'histogram',
-  TreeMap = 'tree_map'
+  TreeMap = 'tree_map',
 }
 
 export interface ValueOptionsAxes {
-  xaxis ?: IField[];
-  yaxis ?: IField[];
-  zaxis ?: IField[];
+  xaxis?: IField[];
+  yaxis?: IField[];
+  zaxis?: IField[];
   childField?: IField[];
   valueField?: IField[];
   series?: IField[];
@@ -97,67 +96,75 @@ export interface ValueOptionsAxes {
 
 export const NUMERICAL_FIELDS = ['short', 'integer', 'long', 'float', 'double'];
 
-export const ENABLED_VIS_TYPES = [visChartTypes.Bar, visChartTypes.HorizontalBar, visChartTypes.Line, visChartTypes.Pie, visChartTypes.HeatMap, visChartTypes.Text, visChartTypes.TreeMap];
+export const ENABLED_VIS_TYPES = [
+  visChartTypes.Bar,
+  visChartTypes.HorizontalBar,
+  visChartTypes.Line,
+  visChartTypes.Pie,
+  visChartTypes.HeatMap,
+  visChartTypes.Text,
+  visChartTypes.TreeMap,
+];
 
 //Live tail constants
 export const LIVE_OPTIONS = [
   {
-    label:'5s',
+    label: '5s',
     startTime: 'now-5s',
     delayTime: 5000,
   },
   {
-    label:'10s',
+    label: '10s',
     startTime: 'now-10s',
     delayTime: 10000,
   },
   {
-    label:'30s',
+    label: '30s',
     startTime: 'now-30s',
     delayTime: 30000,
   },
   {
-    label:'1m',
+    label: '1m',
     startTime: 'now-1m',
     delayTime: 60000,
   },
   {
-    label:'5m',
+    label: '5m',
     startTime: 'now-5m',
     delayTime: 60000 * 5,
   },
   {
-    label:'15m',
+    label: '15m',
     startTime: 'now-15m',
     delayTime: 60000 * 15,
   },
   {
-    label:'30m',
+    label: '30m',
     startTime: 'now-30m',
     delayTime: 60000 * 30,
   },
   {
-    label:'1h',
+    label: '1h',
     startTime: 'now-1h',
     delayTime: 60000 * 60,
   },
   {
-    label:'2h',
+    label: '2h',
     startTime: 'now-2h',
     delayTime: 60000 * 120,
   },
 ];
 
-export const LIVE_END_TIME ='now';
+export const LIVE_END_TIME = 'now';
 export interface DefaultChartStylesProps {
-  DefaultMode: string,
-  Interpolation: string,
-  LineWidth: number,
-  FillOpacity: number,
-  MarkerSize: number,
-  ShowLegend: string,
-  LegendPosition: string
-};
+  DefaultMode: string;
+  Interpolation: string;
+  LineWidth: number;
+  FillOpacity: number;
+  MarkerSize: number;
+  ShowLegend: string;
+  LegendPosition: string;
+}
 
 export const DefaultChartStyles: DefaultChartStylesProps = {
   DefaultMode: 'lines',
@@ -166,9 +173,39 @@ export const DefaultChartStyles: DefaultChartStylesProps = {
   FillOpacity: 40,
   MarkerSize: 5,
   ShowLegend: 'show',
-  LegendPosition: 'v'
-}
+  LegendPosition: 'v',
+};
 
-export const FILLOPACITY_DIV_FACTOR = 200; 
+export const FILLOPACITY_DIV_FACTOR = 200;
 
 export const INTEGRATION = 'integration';
+
+export const QUERY_VIS_TYPES = [
+  {
+    type: visChartTypes.Line,
+    query:
+      'source = nginx_2 | stats avg( upstream_response_time )as Response_Time , count() as response_count by span( @timestamp ,1h)',
+  },
+  {
+    type: visChartTypes.Line,
+    query: 'source = nginx_2 | stats max(bytes_sent), avg(bytes_sent) by remote_addr',
+  },
+  {
+    type: visChartTypes.Bar,
+    query: 'source = nginx_2 | stats count() by request_method',
+  },
+  {
+    type: visChartTypes.Bar,
+    query:
+      'source = nginx_2 |  where status > 400 or status < 599 | stats count() by span( @timestamp , 1d)',
+  },
+  {
+    type: visChartTypes.Line,
+    query: 'source = nginx_2 |  stats avg( bytes_sent ) by span( @timestamp ,1d)',
+  },
+  {
+    type: visChartTypes.Bar,
+    query:
+      'source = nginx_2 | stats avg( upstream_response_time ) as response_time by span( @timestamp , 1h)',
+  },
+];

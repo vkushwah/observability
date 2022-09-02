@@ -48,7 +48,7 @@ import {
 } from '../../../common/constants/custom_panels';
 import { AllApps } from '../integrations/plugins/all_apps';
 import { fetchAppById } from '../application_analytics/helpers/utils';
-import { ENABLED_VIS_TYPES, INTEGRATION } from '../../../common/constants/shared';
+import { INTEGRATION, QUERY_VIS_TYPES } from '../../../common/constants/shared';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -311,17 +311,16 @@ export const Home = (props: HomeProps) => {
   };
 
   // need to move to common , copied from explorer
-  const handleSavingObject = (appId, appName, type, panelId, chartType: string) => {
+  const handleSavingObject = (appId, appName, type, panelId, chartObj) => {
     // create new saved visualization
     savedObjects
       .createSavedVisualization({
-        query:
-          'source = nginx_2 | stats avg( upstream_response_time )as Response_Time , count() as responseCount by span( @timestamp ,1h)',
+        query: chartObj.query,
         fields: [],
         dateRange: ['now/y', 'now'],
-        type: chartType,
-        name: `${chartType} chart ${appName} ${type}`,
-        timestamp: 'timestamp',
+        type: chartObj.type,
+        name: `${chartObj.type} chart ${appName} ${type}`,
+        timestamp: '@timestamp',
         applicationId: appId,
         userConfigs: JSON.stringify({}),
         description: '',
@@ -453,8 +452,8 @@ export const Home = (props: HomeProps) => {
       })
       .then((res) => {
         if (appType === INTEGRATION) {
-          for (let i = 0; i < ENABLED_VIS_TYPES.length; i++) {
-            handleSavingObject(appId, appName, type, updateAppData.panelId, ENABLED_VIS_TYPES[i]);
+          for (let i = 0; i < QUERY_VIS_TYPES.length; i++) {
+            handleSavingObject(appId, appName, type, updateAppData.panelId, QUERY_VIS_TYPES[i]);
           }
         }
         if (type === 'update') {
