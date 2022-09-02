@@ -753,17 +753,12 @@ export const Explorer = ({
     );
   };
 
-  const integrationTab = () => {
+  const getIntegrationTab = () => {
     return [
       getMainContentTab({
         tabID: TAB_EVENT_ID,
         tabTitle: TAB_EVENT_TITLE,
         getContent: () => getMainContent(),
-      }),
-      getMainContentTab({
-        tabID: TAB_CHART_ID,
-        tabTitle: TAB_CHART_TITLE,
-        getContent: () => getExplorerVis(),
       }),
     ];
   };
@@ -784,7 +779,24 @@ export const Explorer = ({
   };
 
   const memorizedMainContentTabs = useMemo(() => {
-    return appType === INTEGRATION ? integrationTab() : getApplicationTab();
+    return getApplicationTab();
+  }, [
+    curVisId,
+    isPanelTextFieldInvalid,
+    explorerData,
+    explorerFields,
+    isSidebarClosed,
+    countDistribution,
+    explorerVisualizations,
+    selectedContentTabId,
+    isOverridingTimestamp,
+    visualizations,
+    query,
+    isLiveTailOnRef.current,
+  ]);
+
+  const memorizedIntegrationContentTabs = useMemo(() => {
+    return getIntegrationTab();
   }, [
     curVisId,
     isPanelTextFieldInvalid,
@@ -1237,13 +1249,21 @@ export const Explorer = ({
           setIsLiveTailPopoverOpen={setIsLiveTailPopoverOpen}
           liveTailName={liveTailNameRef.current}
         />
-        <EuiTabbedContent
-          className="mainContentTabs"
-          initialSelectedTab={memorizedMainContentTabs[0]}
-          selectedTab={memorizedMainContentTabs.find((tab) => tab.id === selectedContentTabId)}
-          onTabClick={(selectedTab: EuiTabbedContentTab) => handleContentTabClick(selectedTab)}
-          tabs={memorizedMainContentTabs}
-        />
+        {appType === INTEGRATION ? (
+          <EuiTabbedContent
+            className="mainContentTabs"
+            initialSelectedTab={memorizedIntegrationContentTabs[0]}
+            tabs={memorizedIntegrationContentTabs}
+          />
+        ) : (
+          <EuiTabbedContent
+            className="mainContentTabs"
+            initialSelectedTab={memorizedMainContentTabs[0]}
+            selectedTab={memorizedMainContentTabs.find((tab) => tab.id === selectedContentTabId)}
+            onTabClick={(selectedTab: EuiTabbedContentTab) => handleContentTabClick(selectedTab)}
+            tabs={memorizedMainContentTabs}
+          />
+        )}
       </div>
     </TabContext.Provider>
   );
