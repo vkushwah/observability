@@ -74,7 +74,8 @@ import { ServiceDetailFlyout } from './flyout_components/service_detail_flyout';
 import { SpanDetailFlyout } from '../../../../public/components/trace_analytics/components/traces/span_detail_flyout';
 import { TraceDetailFlyout } from './flyout_components/trace_detail_flyout';
 import { fetchAppById, initializeTabData } from '../helpers/utils';
-import { Tabs } from '../../integrations/plugins/nginx/tabs';
+import { NginxTab } from '../../integrations/plugins/nginx';
+import { SqlTab } from '../../integrations/plugins/sql';
 import { INTEGRATION } from '../../../../common/constants/shared';
 
 const searchBarConfigs = {
@@ -321,11 +322,11 @@ export function Application(props: AppDetailProps) {
           },
         ];
 
-  const getNginxTab = (tabId: string) => {
+  const getSqlTab = (tabId: string) => {
     return (
       <>
         <EuiSpacer size="m" />
-        <Tabs
+        <SqlTab
           panelId={application.panelId}
           http={http}
           pplService={pplService}
@@ -334,9 +335,36 @@ export function Application(props: AppDetailProps) {
           parentBreadcrumbs={parentBreadcrumbs}
           childBreadcrumbs={childBreadcrumbs}
           // App analytics will not be renaming/cloning/deleting panels
-          renameCustomPanel={async () => undefined}
-          cloneCustomPanel={async () => Promise.reject()}
-          deleteCustomPanel={async () => Promise.reject()}
+          setToast={setToasts}
+          page="app"
+          appId={appId}
+          updateAvailabilityVizId={updateAvailabilityVizId}
+          startTime={appStartTime}
+          endTime={appEndTime}
+          setStartTime={setStartTimeForApp}
+          setEndTime={setEndTimeForApp}
+          onAddClick={switchToEvent}
+          onEditClick={onEditClick}
+          tabId={tabId}
+          appType={appType}
+        />
+      </>
+    );
+  };
+
+  const getNginxTab = (tabId: string) => {
+    return (
+      <>
+        <EuiSpacer size="m" />
+        <NginxTab
+          panelId={application.panelId}
+          http={http}
+          pplService={pplService}
+          dslService={dslService}
+          chrome={chrome}
+          parentBreadcrumbs={parentBreadcrumbs}
+          childBreadcrumbs={childBreadcrumbs}
+          // App analytics will not be renaming/cloning/deleting panels
           setToast={setToasts}
           page="app"
           appId={appId}
@@ -533,6 +561,7 @@ export function Application(props: AppDetailProps) {
         appId={appId}
         parentBreadcrumbs={parentBreadcrumbs}
         application={application}
+        appType={appType}
         switchToAvailability={switchToAvailability}
         visWithAvailability={visWithAvailability}
         updateApp={updateApp}

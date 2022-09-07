@@ -30,36 +30,36 @@ import { last } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { DurationRange } from '@elastic/eui/src/components/date_picker/types';
 import moment from 'moment';
-import DSLService from '../../../../../services/requests/dsl'; //../../../../services/requests/dsl
-import { CoreStart } from '../../../../../../../../src/core/public';
-import { EmptyPanelView } from '../../../../custom_panels/panel_modules/empty_panel';
+import DSLService from '../../../services/requests/dsl'; //../../../../services/requests/dsl
+import { CoreStart } from '../../../../../../src/core/public';
+import { EmptyPanelView } from '../../custom_panels/panel_modules/empty_panel';
 import {
   CREATE_PANEL_MESSAGE,
   CUSTOM_PANELS_API_PREFIX,
-} from '../../../../../../common/constants/custom_panels';
-import { SavedVisualizationType, VisualizationType } from '../../../../../../common/types/custom_panels';
-import { PanelGrid } from '../../../../custom_panels/panel_modules/panel_grid';
-import { getCustomModal } from '../../../../custom_panels/helpers/modal_containers';
-import PPLService from '../../../../../services/requests/ppl';
+} from '../../../../common/constants/custom_panels';
+import { SavedVisualizationType, VisualizationType } from '../../../../common/types/custom_panels';
+import { PanelGrid } from '../../custom_panels/panel_modules/panel_grid';
+import { getCustomModal } from '../../custom_panels/helpers/modal_containers';
+import PPLService from '../../../services/requests/ppl';
 import {
   isDateValid,
   convertDateTime,
   onTimeChange,
   isPPLFilterValid,
   fetchVisualizationById,
-} from '../../../../custom_panels/helpers/utils';
-import { UI_DATE_FORMAT } from '../../../../../../common/constants/shared';
-import { VisaulizationFlyout } from '../../../../custom_panels/panel_modules/visualization_flyout';
-import { uiSettingsService } from '../../../../../../common/utils';
-import { PPLReferenceFlyout } from '../../../../common/helpers';
-import { Autocomplete } from '../../../../common/search/autocomplete';
+} from '../../custom_panels/helpers/utils';
+import { UI_DATE_FORMAT } from '../../../../common/constants/shared';
+import { VisaulizationFlyout } from '../../custom_panels/panel_modules/visualization_flyout';
+import { uiSettingsService } from '../../../../common/utils';
+import { PPLReferenceFlyout } from '../../common/helpers';
+import { Autocomplete } from '../../common/search/autocomplete';
 import {
   parseGetSuggestions,
   onItemSelect,
   parseForIndices,
-} from '../../../../common/search/autocomplete_logic';
-import { AddVisualizationPopover } from '../../../../custom_panels/helpers/add_visualization_popover';
-import { DeleteModal } from '../../../../common/helpers/delete_modal';
+} from '../../common/search/autocomplete_logic';
+import { AddVisualizationPopover } from '../../custom_panels/helpers/add_visualization_popover';
+import { DeleteModal } from '../../common/helpers/delete_modal';
 
 /*
  * "CustomPanelsView" module used to render an Operational Panel

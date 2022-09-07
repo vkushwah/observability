@@ -295,7 +295,7 @@ export const Home = (props: HomeProps) => {
           setApplication,
           setAppConfigs,
           setVisWithAvailability,
-          setToasts,
+          setToasts
         );
       })
       .catch((err) => {
@@ -540,6 +540,7 @@ export const Home = (props: HomeProps) => {
           path={[
             '/application_analytics/create',
             '/application_analytics/edit/:id+',
+            '/integrations/plugins/edit/:id+',
             '/application_analytics/create/:id+',
           ]}
           render={(routerProps) => {

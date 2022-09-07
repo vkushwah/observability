@@ -21,6 +21,7 @@ import {
 import { TraceAnalyticsCoreDeps } from 'public/components/trace_analytics/home';
 import React, { useEffect } from 'react';
 import { pageStyles } from '../../../../common/constants/shared';
+import { apps } from './app_list';
 
 export function AllApps(props: TraceAnalyticsCoreDeps) {
   const { parentBreadcrumbs, http, chrome } = props;
@@ -39,34 +40,7 @@ export function AllApps(props: TraceAnalyticsCoreDeps) {
     ]);
   }, []);
 
-  const icons = [
-    {
-      name: 'Sql',
-      icon: 'MySQL',
-      path: 'create?type=integration',
-      description: 'Collect performance schema metrics, query throughput, custom metrics, and more',
-    },
-    {
-      name: 'Nginx',
-      icon: 'Nginx',
-      path: 'create?type=integration&app=Nginx',
-      description: 'Monitor connection and request metrics with NGINX',
-    },
-    {
-      name: 'Kibana',
-      icon: 'Kibana',
-      path: 'create?type=integration',
-      description: 'Monitor connection and request metrics with Kibana',
-    },
-    {
-      name: 'Metrics',
-      icon: 'Metrics',
-      path: 'create?type=integration',
-      description: 'Monitor connection and request metrics with Kibana',
-    },
-  ];
-
-  const cardNodes = icons.map(function (item, index) {
+  const cardNodes = apps.map(function (item, index) {
     return (
       <EuiFlexItem key={index}>
         <EuiCard

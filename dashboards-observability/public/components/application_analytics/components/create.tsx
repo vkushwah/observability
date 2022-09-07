@@ -104,7 +104,7 @@ export const CreateApp = (props: CreateAppProps) => {
     panelId: '',
     availability: { name: '', color: '', availabilityVisId: '' },
   });
-
+  console.log('edit');
   const breadCrumbs =
     appType === INTEGRATION
       ? [

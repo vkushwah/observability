@@ -26,12 +26,14 @@ import {
 import { ApplicationRequestType, ApplicationType } from 'common/types/application_analytics';
 import { last } from 'lodash';
 import React, { useState } from 'react';
+import { INTEGRATION } from '../../../../common/constants/shared';
 
 interface ConfigProps {
   appId: string;
   application: ApplicationType;
   parentBreadcrumbs: EuiBreadcrumb[];
   visWithAvailability: EuiSelectOption[];
+  appType?: string;
   switchToAvailability: () => void;
   updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
 }
@@ -42,6 +44,7 @@ export const Configuration = (props: ConfigProps) => {
     application,
     parentBreadcrumbs,
     visWithAvailability,
+    appType,
     updateApp,
     switchToAvailability,
   } = props;
@@ -53,6 +56,9 @@ export const Configuration = (props: ConfigProps) => {
     setAvailabilityVisId(event.target.value);
     updateApp(appId, { availabilityVisId: event.target.value }, 'editAvailability');
   };
+
+  const location =
+    appType === INTEGRATION ? 'integrations/plugins/edit/' : 'application_analytics/edit/';
 
   return (
     <div>
@@ -73,7 +79,7 @@ export const Configuration = (props: ConfigProps) => {
                       data-test-subj="editApplicationButton"
                       onClick={() => {
                         window.location.assign(
-                          `${last(parentBreadcrumbs)!.href}application_analytics/edit/${appId}`
+                          `${last(parentBreadcrumbs)!.href}${location}${appId}`
                         );
                       }}
                     >
