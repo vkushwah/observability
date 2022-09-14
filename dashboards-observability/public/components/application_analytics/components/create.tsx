@@ -45,6 +45,7 @@ import {
 import { fetchAppById } from '../helpers/utils';
 import { FlyoutContainers } from '../../common/flyout_containers';
 import { NginxDocument } from '../../integrations/plugins/nginx/doc';
+import { SqlDocument } from '../../integrations/plugins/sql/doc';
 import { INTEGRATION } from '../../../../common/constants/shared';
 
 interface CreateAppProps extends AppAnalyticsComponentDeps {
@@ -104,7 +105,7 @@ export const CreateApp = (props: CreateAppProps) => {
     panelId: '',
     availability: { name: '', color: '', availabilityVisId: '' },
   });
-  console.log('edit');
+
   const breadCrumbs =
     appType === INTEGRATION
       ? [
@@ -271,6 +272,17 @@ export const CreateApp = (props: CreateAppProps) => {
     window.location.assign(`${last(parentBreadcrumbs)!.href}${redirectOnCancel}`);
   };
 
+  const renderDocument = (appName: string | null) => {
+    switch (appName) {
+      case 'Nginx':
+        return <NginxDocument appName={appName} />;
+      case 'Sql':
+        return <SqlDocument appName={appName} />;
+      default:
+        return 'Add Documet component';
+    }
+  };
+
   return (
     <div>
       <EuiPage>
@@ -367,7 +379,7 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
-        {appType === INTEGRATION && appName === 'Nginx' && <NginxDocument appName={appName} />}
+        {appType === INTEGRATION && renderDocument(appName)}
       </EuiPage>
       {integrationFlyout}
       {flyout}

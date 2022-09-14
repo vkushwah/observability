@@ -58,7 +58,9 @@ export const Configuration = (props: ConfigProps) => {
   };
 
   const location =
-    appType === INTEGRATION ? 'integrations/plugins/edit/' : 'application_analytics/edit/';
+    appType === INTEGRATION
+      ? `integrations/plugins/edit/${appId}?type=integration`
+      : `application_analytics/edit/${appId}`;
 
   return (
     <div>
@@ -78,9 +80,7 @@ export const Configuration = (props: ConfigProps) => {
                       fill
                       data-test-subj="editApplicationButton"
                       onClick={() => {
-                        window.location.assign(
-                          `${last(parentBreadcrumbs)!.href}${location}${appId}`
-                        );
+                        window.location.assign(`${last(parentBreadcrumbs)!.href}${location}`);
                       }}
                     >
                       Edit
