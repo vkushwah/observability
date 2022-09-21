@@ -28,6 +28,7 @@ export interface ApplicationRequestType {
   traceGroups: string[];
   panelId: string;
   availabilityVisId: string;
+  // appType: string | null; TODO Uncomment this line when api if fixed to accept this field
 }
 
 export interface AvailabilityType {

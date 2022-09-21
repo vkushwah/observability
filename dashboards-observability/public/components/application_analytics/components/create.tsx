@@ -6,12 +6,16 @@
 
 import {
   EuiButton,
+  EuiButtonEmpty,
   EuiFieldText,
   EuiFlexGroup,
   EuiFlexItem,
+  EuiFlyoutBody,
+  EuiFlyoutFooter,
   EuiForm,
   EuiFormRow,
   EuiHorizontalRule,
+  EuiLink,
   EuiPage,
   EuiPageBody,
   EuiPageContent,
@@ -20,6 +24,7 @@ import {
   EuiPageHeader,
   EuiPageHeaderSection,
   EuiSpacer,
+  EuiText,
   EuiTitle,
   EuiToolTip,
 } from '@elastic/eui';
@@ -38,15 +43,27 @@ import {
   OptionType,
 } from '../../../../common/types/application_analytics';
 import { fetchAppById } from '../helpers/utils';
+import { FlyoutContainers } from '../../common/flyout_containers';
+import { NginxDocument } from '../../integrations/plugins/nginx/doc';
+import { SqlDocument } from '../../integrations/plugins/sql/doc';
+import { INTEGRATION } from '../../../../common/constants/shared';
 
 interface CreateAppProps extends AppAnalyticsComponentDeps {
   dslService: DSLService;
   pplService: PPLService;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
-  createApp: (app: ApplicationRequestType, type: string) => void;
-  updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
+  createApp: (app: ApplicationRequestType, type: string, appType?: string | null) => void;
+  updateApp: (
+    appId: string,
+    updateAppData: Partial<ApplicationRequestType>,
+    type: string,
+    appName: string,
+    appType?: string | null
+  ) => void;
   clearStorage: () => void;
   existingAppId: string;
+  appName: string | null;
+  appType: string | null;
 }
 
 export const CreateApp = (props: CreateAppProps) => {
@@ -67,8 +84,11 @@ export const CreateApp = (props: CreateAppProps) => {
     setFilters,
     clearStorage,
     existingAppId,
+    appType,
+    appName,
   } = props;
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
+  const [isFlyoutVisibleIntegration, setIsFlyoutVisibleIntegration] = useState(false);
   const [selectedServices, setSelectedServices] = useState<OptionType[]>([]);
   const [selectedTraces, setSelectedTraces] = useState<OptionType[]>([]);
 
@@ -86,13 +106,29 @@ export const CreateApp = (props: CreateAppProps) => {
     availability: { name: '', color: '', availabilityVisId: '' },
   });
 
+  const breadCrumbs =
+    appType === INTEGRATION
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: 'All Integrations',
+            href: '#/integrations/plugins/all_apps',
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+        ];
+
   useEffect(() => {
     chrome.setBreadcrumbs([
       ...parentBreadcrumbs,
-      {
-        text: 'Application analytics',
-        href: '#/application_analytics',
-      },
+      ...breadCrumbs,
       {
         text: editMode ? 'Edit' : 'Create',
         href: `#/application_analytics/${editMode ? 'edit' : 'create'}`,
@@ -126,6 +162,64 @@ export const CreateApp = (props: CreateAppProps) => {
     setIsFlyoutVisible(false);
   };
 
+  const closeIntegrationFlyout = () => {
+    setIsFlyoutVisibleIntegration(false);
+  };
+
+  const openIntegrationFlyout = () => {
+    setIsFlyoutVisibleIntegration(true);
+  };
+
+  let integrationFlyout;
+  if (isFlyoutVisibleIntegration) {
+    integrationFlyout = (
+      <FlyoutContainers
+        closeFlyout={closeIntegrationFlyout}
+        flyoutHeader={
+          <EuiPageHeader>
+            <EuiPageHeaderSection>
+              {/* <EuiTitle data-test-subj="createPageTitle" size="l">
+                <h1>{appName} Doc</h1>
+              </EuiTitle> */}
+            </EuiPageHeaderSection>
+          </EuiPageHeader>
+        }
+        flyoutBody={
+          <EuiPageContent id="appInfo">
+            <EuiPageContentHeader>
+              <EuiPageContentHeaderSection>
+                <EuiTitle size="m">
+                  <h2>{appName} information</h2>
+                </EuiTitle>
+              </EuiPageContentHeaderSection>
+            </EuiPageContentHeader>
+            <EuiHorizontalRule />
+            <EuiText grow={false}>
+              NGINX is open source software for web serving, reverse proxying, caching, load
+              balancing, media streaming, and more. It started out as a web server designed for
+              maximum performance and stability. In addition to its HTTP server capabilities, NGINX
+              can also function as a proxy server for email (IMAP, POP3, and SMTP) and a reverse
+              proxy and load balancer for HTTP, TCP, and UDP servers.
+            </EuiText>
+            <EuiLink href="https://www.nginx.com/resources/glossary/nginx/" target="_blank">
+              Click here to know more about NGINX
+            </EuiLink>
+          </EuiPageContent>
+        }
+        flyoutFooter={
+          <EuiFlyoutFooter>
+            <EuiFlexGroup gutterSize="s" justifyContent="spaceBetween">
+              <EuiFlexItem grow={false}>
+                <EuiButton onClick={closeIntegrationFlyout}>Close</EuiButton>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </EuiFlyoutFooter>
+        }
+        ariaLabel="pplReferenceFlyout"
+      />
+    );
+  }
+
   let flyout;
   if (isFlyoutVisible) {
     flyout = <PPLReferenceFlyout module="explorer" closeFlyout={closeFlyout} />;
@@ -156,8 +250,9 @@ export const CreateApp = (props: CreateAppProps) => {
       traceGroups: selectedTraces.map((option) => option.label),
       panelId: '',
       availabilityVisId: '',
+      // appType: appType, TODO uncomment this when backend api is fixed to accept this new field
     };
-    createApp(appData, type);
+    createApp(appData, type, appType);
   };
 
   const onUpdate = () => {
@@ -167,18 +262,31 @@ export const CreateApp = (props: CreateAppProps) => {
       servicesEntities: selectedServices.map((option) => option.label),
       traceGroups: selectedTraces.map((option) => option.label),
     };
-    updateApp(existingAppId, appData, 'update');
+    updateApp(existingAppId, appData, 'update', appName, appType);
   };
 
+  const redirectOnCancel =
+    appType === INTEGRATION ? 'integrations/plugins' : 'application_analytics';
   const onCancel = () => {
     clearStorage();
-    window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics`);
+    window.location.assign(`${last(parentBreadcrumbs)!.href}${redirectOnCancel}`);
+  };
+
+  const renderDocument = (appName: string | null) => {
+    switch (appName) {
+      case 'Nginx':
+        return <NginxDocument appName={appName} />;
+      case 'Sql':
+        return <SqlDocument appName={appName} />;
+      default:
+        return 'Add Documet component';
+    }
   };
 
   return (
-    <div style={{ maxWidth: '1130px' }}>
+    <div>
       <EuiPage>
-        <EuiPageBody component="div">
+        <EuiPageBody component="div" style={{ maxWidth: '980px' }}>
           <EuiPageHeader>
             <EuiPageHeaderSection>
               <EuiTitle data-test-subj="createPageTitle" size="l">
@@ -271,7 +379,9 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
+        {appType === INTEGRATION && renderDocument(appName)}
       </EuiPage>
+      {integrationFlyout}
       {flyout}
     </div>
   );

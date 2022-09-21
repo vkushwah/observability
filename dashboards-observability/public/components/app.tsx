@@ -9,9 +9,10 @@ import { Provider } from 'react-redux';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import { QueryManager } from 'common/query_manager';
 import { CoreStart } from '../../../../src/core/public';
-import { observabilityID, observabilityTitle } from '../../common/constants/shared';
+import { INTEGRATION, observabilityID, observabilityTitle } from '../../common/constants/shared';
 import store from '../framework/redux/store';
 import { AppPluginStartDependencies } from '../types';
+// import { Home as ApplicationAnalyticsHome } from './integrations/plugins/application_analytics/home';
 import { Home as ApplicationAnalyticsHome } from './application_analytics/home';
 import { Home as CustomPanelsHome } from './custom_panels/home';
 import { EventAnalytics } from './event_analytics';
@@ -73,6 +74,26 @@ export const App = ({
                       dslService={dslService}
                       savedObjects={savedObjects}
                       timestampUtils={timestampUtils}
+                      appType={'application'}
+                    />
+                  );
+                }}
+              />
+              <Route
+                path={'/integrations/plugins'}
+                render={(props) => {
+                  return (
+                    <ApplicationAnalyticsHome
+                      {...props}
+                      chrome={chrome}
+                      http={http}
+                      notifications={notifications}
+                      parentBreadcrumbs={[parentBreadcrumb]}
+                      pplService={pplService}
+                      dslService={dslService}
+                      savedObjects={savedObjects}
+                      timestampUtils={timestampUtils}
+                      appType={INTEGRATION}
                     />
                   );
                 }}

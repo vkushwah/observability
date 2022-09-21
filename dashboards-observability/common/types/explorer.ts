@@ -101,6 +101,7 @@ export interface ILogExplorerProps {
 }
 
 export interface IExplorerProps {
+  appType?: string;
   pplService: PPLService;
   dslService: DSLService;
   tabId: string;

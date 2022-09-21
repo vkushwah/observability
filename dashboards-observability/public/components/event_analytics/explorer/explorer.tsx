@@ -57,6 +57,7 @@ import {
   PPL_NEWLINE_REGEX,
   LIVE_OPTIONS,
   LIVE_END_TIME,
+  INTEGRATION,
 } from '../../../../common/constants/shared';
 import { getIndexPatternFromRawQuery, preprocessQuery, buildQuery } from '../../../../common/utils';
 import { useFetchEvents, useFetchVisualizations } from '../hooks';
@@ -107,6 +108,7 @@ export const Explorer = ({
   callback,
   callbackInApp,
   qm,
+  appType,
 }: IExplorerProps) => {
   const dispatch = useDispatch();
   const requestParams = { tabId };
@@ -143,7 +145,7 @@ export const Explorer = ({
   const [browserTabFocus, setBrowserTabFocus] = useState(true);
   const [liveTimestamp, setLiveTimestamp] = useState(DATE_PICKER_FORMAT);
   const [triggerAvailability, setTriggerAvailability] = useState(false);
-  const [isValidDataConfigOptionSelected, setIsValidDataConfigOptionSelected] = useState<boolean>(
+  const [isValidDataConfigOptionSelected, setIsValidDataConfigOptionSelected] = useState<Boolean>(
     false
   );
 
@@ -336,7 +338,6 @@ export const Explorer = ({
       startingTime = curQuery![SELECTED_DATE_RANGE][0];
       endingTime = curQuery![SELECTED_DATE_RANGE][1];
     }
-
     // compose final query
     const finalQuery = composeFinalQuery(
       curQuery,
@@ -746,7 +747,7 @@ export const Explorer = ({
     }
   };
 
-  const changeIsValidConfigOptionState = (isValidConfig: boolean) =>
+  const changeIsValidConfigOptionState = (isValidConfig: Boolean) =>
     setIsValidDataConfigOptionSelected(isValidConfig);
 
   const getExplorerVis = () => {
@@ -769,7 +770,17 @@ export const Explorer = ({
     );
   };
 
-  const getMainContentTabs = () => {
+  const getIntegrationTab = () => {
+    return [
+      getMainContentTab({
+        tabID: TAB_EVENT_ID,
+        tabTitle: TAB_EVENT_TITLE,
+        getContent: () => getMainContent(),
+      }),
+    ];
+  };
+
+  const getApplicationTab = () => {
     return [
       getMainContentTab({
         tabID: TAB_EVENT_ID,
@@ -785,7 +796,24 @@ export const Explorer = ({
   };
 
   const memorizedMainContentTabs = useMemo(() => {
-    return getMainContentTabs();
+    return getApplicationTab();
+  }, [
+    curVisId,
+    isPanelTextFieldInvalid,
+    explorerData,
+    explorerFields,
+    isSidebarClosed,
+    countDistribution,
+    explorerVisualizations,
+    selectedContentTabId,
+    isOverridingTimestamp,
+    visualizations,
+    query,
+    isLiveTailOnRef.current,
+  ]);
+
+  const memorizedIntegrationContentTabs = useMemo(() => {
+    return getIntegrationTab();
   }, [
     curVisId,
     isPanelTextFieldInvalid,
@@ -894,7 +922,53 @@ export const Explorer = ({
 
   const handleQueryChange = async (newQuery: string) => setTempQuery(newQuery);
 
+  // need to move to common , copied from explorer
+  const handleCreatingObject = () => {
+    // create new saved visualization
+    savedObjects
+      .createSavedQuery({
+        query: 'source = opensearch_dashboards_sample_data_logs | stats count() , max( memory ) ',
+        fields: [],
+        dateRange: ['now/y', 'now/y'],
+        type,
+        name: appName,
+        timestamp: 'timestamp',
+        applicationId: appId,
+        userConfigs: {},
+        description: '',
+      })
+      .then((res: any) => {
+        batch(() => {
+          addVisualizationToPanel(res.objectId, selectedPanelNameRef.current);
+          dispatch(
+            changeQuery({
+              undefined,
+              query: {
+                [SAVED_OBJECT_ID]: res.objectId,
+                [SAVED_OBJECT_TYPE]: SAVED_VISUALIZATION,
+              },
+            })
+          );
+          dispatch(
+            updateTabName({
+              undefined,
+              tabName: selectedPanelNameRef.current,
+            })
+          );
+        });
+        setToast('New visualization');
+        return res;
+      })
+      .catch((error: any) => {
+        notifications.toasts.addError(error, {
+          title: `Cannot save Visualization '${selectedPanelNameRef.current}'`,
+        });
+      });
+  };
   const handleSavingObject = async () => {
+    // if (appType === INTEGRATION) {
+    //   handleCreatingObject(iAppId, iAppName, itype);
+    // } else {
     const currQuery = queryRef.current;
     const currFields = explorerFieldsRef.current;
     if (isEmpty(currQuery![RAW_QUERY]) && isEmpty(appBaseQuery)) {
@@ -1110,6 +1184,7 @@ export const Explorer = ({
           });
       }
     }
+    //}
   };
 
   const liveTailLoop = async (
@@ -1247,13 +1322,21 @@ export const Explorer = ({
           liveTailName={liveTailNameRef.current}
           searchError={explorerVisualizations}
         />
-        <EuiTabbedContent
-          className="mainContentTabs"
-          initialSelectedTab={memorizedMainContentTabs[0]}
-          selectedTab={memorizedMainContentTabs.find((tab) => tab.id === selectedContentTabId)}
-          onTabClick={(selectedTab: EuiTabbedContentTab) => handleContentTabClick(selectedTab)}
-          tabs={memorizedMainContentTabs}
-        />
+        {appType === INTEGRATION ? (
+          <EuiTabbedContent
+            className="mainContentTabs"
+            initialSelectedTab={memorizedIntegrationContentTabs[0]}
+            tabs={memorizedIntegrationContentTabs}
+          />
+        ) : (
+          <EuiTabbedContent
+            className="mainContentTabs"
+            initialSelectedTab={memorizedMainContentTabs[0]}
+            selectedTab={memorizedMainContentTabs.find((tab) => tab.id === selectedContentTabId)}
+            onTabClick={(selectedTab: EuiTabbedContentTab) => handleContentTabClick(selectedTab)}
+            tabs={memorizedMainContentTabs}
+          />
+        )}
       </div>
     </TabContext.Provider>
   );

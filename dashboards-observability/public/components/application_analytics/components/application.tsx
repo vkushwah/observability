@@ -41,6 +41,8 @@ import { Configuration } from './configuration';
 import {
   TAB_CONFIG_ID,
   TAB_CONFIG_TITLE,
+  TAB_INTEGRATION_ID,
+  TAB_INTEGRATION_TITLE,
   TAB_LOG_ID,
   TAB_LOG_TITLE,
   TAB_OVERVIEW_ID,
@@ -49,8 +51,14 @@ import {
   TAB_PANEL_TITLE,
   TAB_SERVICE_ID,
   TAB_SERVICE_TITLE,
+  TAB_TCP_UPSTREAMS_ID,
+  TAB_TCP_UPSTREAMS_TITLE,
+  TAB_TCP_ZONES_ID,
+  TAB_TCP_ZONES_TITLE,
   TAB_TRACE_ID,
   TAB_TRACE_TITLE,
+  TAB_UPSTREAM_ID,
+  TAB_UPSTREAM_TITLE,
 } from '../../../../common/constants/application_analytics';
 import { TAB_EVENT_ID, TAB_CHART_ID, NEW_TAB } from '../../../../common/constants/explorer';
 import { IQueryTab } from '../../../../common/types/explorer';
@@ -66,6 +74,9 @@ import { ServiceDetailFlyout } from './flyout_components/service_detail_flyout';
 import { SpanDetailFlyout } from '../../../../public/components/trace_analytics/components/traces/span_detail_flyout';
 import { TraceDetailFlyout } from './flyout_components/trace_detail_flyout';
 import { fetchAppById, initializeTabData } from '../helpers/utils';
+import { NginxTab } from '../../integrations/plugins/nginx';
+import { SqlTab } from '../../integrations/plugins/sql';
+import { INTEGRATION } from '../../../../common/constants/shared';
 
 const searchBarConfigs = {
   [TAB_EVENT_ID]: {
@@ -86,7 +97,14 @@ interface AppDetailProps extends AppAnalyticsComponentDeps {
   savedObjects: SavedObjects;
   timestampUtils: TimestampUtils;
   notifications: NotificationsStart;
-  updateApp: (appId: string, updateAppData: Partial<ApplicationRequestType>, type: string) => void;
+  appType: string;
+  updateApp: (
+    appId: string,
+    updateAppData: Partial<ApplicationRequestType>,
+    type: string,
+    appName?: string,
+    appType?: string | null
+  ) => void;
   setToasts: (title: string, color?: string, text?: ReactChild) => void;
   callback: (childfunction: () => void) => void;
 }
@@ -105,6 +123,7 @@ export function Application(props: AppDetailProps) {
     query,
     filters,
     appConfigs,
+    appType,
     updateApp,
     setAppConfigs,
     setToasts,
@@ -210,18 +229,31 @@ export function Application(props: AppDetailProps) {
     callback(switchToEvent);
   }, [appId]);
 
+  const breadCrumbs =
+    appType === INTEGRATION
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: application.name,
+            href: `${last(parentBreadcrumbs)!.href}integrations/plugins/${appId}`,
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+          {
+            text: application.name,
+            href: `${last(parentBreadcrumbs)!.href}application_analytics/${appId}`,
+          },
+        ];
+
   useEffect(() => {
-    chrome.setBreadcrumbs([
-      ...parentBreadcrumbs,
-      {
-        text: 'Application analytics',
-        href: '#/application_analytics',
-      },
-      {
-        text: application.name,
-        href: `${last(parentBreadcrumbs)!.href}application_analytics/${appId}`,
-      },
-    ]);
+    chrome.setBreadcrumbs([...parentBreadcrumbs, ...breadCrumbs]);
     setStartTimeForApp(sessionStorage.getItem(`${application.name}StartTime`) || 'now-24h');
     setEndTimeForApp(sessionStorage.getItem(`${application.name}EndTime`) || 'now');
   }, [appId, application.name]);
@@ -267,16 +299,88 @@ export function Application(props: AppDetailProps) {
     setTraceFlyoutId('');
   };
 
-  const childBreadcrumbs = [
-    {
-      text: 'Application analytics',
-      href: '#/application_analytics',
-    },
-    {
-      text: `${application.name}`,
-      href: `#/application_analytics/${appId}`,
-    },
-  ];
+  const childBreadcrumbs =
+    appType === INTEGRATION
+      ? [
+          {
+            text: 'Integrations',
+            href: '#/integrations/plugins',
+          },
+          {
+            text: `${application.name}`,
+            href: `#/integrations/plugins/application_analytics/${appId}`,
+          },
+        ]
+      : [
+          {
+            text: 'Application analytics',
+            href: '#/application_analytics',
+          },
+          {
+            text: `${application.name}`,
+            href: `#/application_analytics/${appId}`,
+          },
+        ];
+
+  const getSqlTab = (tabId: string) => {
+    return (
+      <>
+        <EuiSpacer size="m" />
+        <SqlTab
+          panelId={application.panelId}
+          http={http}
+          pplService={pplService}
+          dslService={dslService}
+          chrome={chrome}
+          parentBreadcrumbs={parentBreadcrumbs}
+          childBreadcrumbs={childBreadcrumbs}
+          // App analytics will not be renaming/cloning/deleting panels
+          setToast={setToasts}
+          page="app"
+          appId={appId}
+          updateAvailabilityVizId={updateAvailabilityVizId}
+          startTime={appStartTime}
+          endTime={appEndTime}
+          setStartTime={setStartTimeForApp}
+          setEndTime={setEndTimeForApp}
+          onAddClick={switchToEvent}
+          onEditClick={onEditClick}
+          tabId={tabId}
+          appType={appType}
+        />
+      </>
+    );
+  };
+
+  const getNginxTab = (tabId: string) => {
+    return (
+      <>
+        <EuiSpacer size="m" />
+        <NginxTab
+          panelId={application.panelId}
+          http={http}
+          pplService={pplService}
+          dslService={dslService}
+          chrome={chrome}
+          parentBreadcrumbs={parentBreadcrumbs}
+          childBreadcrumbs={childBreadcrumbs}
+          // App analytics will not be renaming/cloning/deleting panels
+          setToast={setToasts}
+          page="app"
+          appId={appId}
+          updateAvailabilityVizId={updateAvailabilityVizId}
+          startTime={appStartTime}
+          endTime={appEndTime}
+          setStartTime={setStartTimeForApp}
+          setEndTime={setEndTimeForApp}
+          onAddClick={switchToEvent}
+          onEditClick={onEditClick}
+          tabId={tabId}
+          appType={appType}
+        />
+      </>
+    );
+  };
 
   const getOverview = () => {
     return (
@@ -356,6 +460,7 @@ export function Application(props: AppDetailProps) {
   const getLog = () => {
     return (
       <Explorer
+        appType={appType}
         key={`explorer_application-analytics-tab`}
         pplService={pplService}
         dslService={dslService}
@@ -416,6 +521,7 @@ export function Application(props: AppDetailProps) {
         updateAvailabilityVizId={updateAvailabilityVizId}
         startTime={appStartTime}
         endTime={appEndTime}
+        appType={appType}
         setStartTime={setStartTimeForApp}
         setEndTime={setEndTimeForApp}
         onAddClick={switchToEvent}
@@ -455,6 +561,8 @@ export function Application(props: AppDetailProps) {
         appId={appId}
         parentBreadcrumbs={parentBreadcrumbs}
         application={application}
+        appType={appType}
+        appName={appName}
         switchToAvailability={switchToAvailability}
         visWithAvailability={visWithAvailability}
         updateApp={updateApp}
@@ -484,7 +592,30 @@ export function Application(props: AppDetailProps) {
     };
   }
 
-  const appAnalyticsTabs = [
+  let appAnalyticsTabs;
+  const integrationTabs = [
+    getAppAnalyticsTab({
+      tabId: TAB_INTEGRATION_ID,
+      tabTitle: TAB_INTEGRATION_TITLE,
+      getContent: () => getNginxTab(TAB_INTEGRATION_ID),
+    }),
+    getAppAnalyticsTab({
+      tabId: TAB_LOG_ID,
+      tabTitle: TAB_LOG_TITLE,
+      getContent: () => getLog(),
+    }),
+    getAppAnalyticsTab({
+      tabId: TAB_PANEL_ID,
+      tabTitle: TAB_PANEL_TITLE,
+      getContent: () => getPanel(),
+    }),
+    getAppAnalyticsTab({
+      tabId: TAB_CONFIG_ID,
+      tabTitle: TAB_CONFIG_TITLE,
+      getContent: () => getConfig(),
+    }),
+  ];
+  const analyticsTabs = [
     getAppAnalyticsTab({
       tabId: TAB_OVERVIEW_ID,
       tabTitle: TAB_OVERVIEW_TITLE,
@@ -516,6 +647,8 @@ export function Application(props: AppDetailProps) {
       getContent: () => getConfig(),
     }),
   ];
+
+  appAnalyticsTabs = appType === INTEGRATION ? integrationTabs : analyticsTabs;
 
   return (
     <div>
