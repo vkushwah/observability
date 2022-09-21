@@ -562,7 +562,6 @@ export function Application(props: AppDetailProps) {
         parentBreadcrumbs={parentBreadcrumbs}
         application={application}
         appType={appType}
-        appName={appName}
         switchToAvailability={switchToAvailability}
         visWithAvailability={visWithAvailability}
         updateApp={updateApp}
