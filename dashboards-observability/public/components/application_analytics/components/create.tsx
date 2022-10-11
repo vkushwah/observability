@@ -45,7 +45,6 @@ import {
 import { fetchAppById } from '../helpers/utils';
 import { FlyoutContainers } from '../../common/flyout_containers';
 import { NginxDocument } from '../../integrations/plugins/nginx/doc';
-import { SqlDocument } from '../../integrations/plugins/sql/doc';
 import { INTEGRATION } from '../../../../common/constants/shared';
 
 interface CreateAppProps extends AppAnalyticsComponentDeps {
@@ -276,8 +275,6 @@ export const CreateApp = (props: CreateAppProps) => {
     switch (appName) {
       case 'Nginx':
         return <NginxDocument appName={appName} />;
-      case 'Sql':
-        return <SqlDocument appName={appName} />;
       default:
         return 'Add Documet component';
     }

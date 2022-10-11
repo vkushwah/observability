@@ -75,7 +75,6 @@ import { SpanDetailFlyout } from '../../../../public/components/trace_analytics/
 import { TraceDetailFlyout } from './flyout_components/trace_detail_flyout';
 import { fetchAppById, initializeTabData } from '../helpers/utils';
 import { NginxTab } from '../../integrations/plugins/nginx';
-import { SqlTab } from '../../integrations/plugins/sql';
 import { INTEGRATION } from '../../../../common/constants/shared';
 
 const searchBarConfigs = {
@@ -321,36 +320,6 @@ export function Application(props: AppDetailProps) {
             href: `#/application_analytics/${appId}`,
           },
         ];
-
-  const getSqlTab = (tabId: string) => {
-    return (
-      <>
-        <EuiSpacer size="m" />
-        <SqlTab
-          panelId={application.panelId}
-          http={http}
-          pplService={pplService}
-          dslService={dslService}
-          chrome={chrome}
-          parentBreadcrumbs={parentBreadcrumbs}
-          childBreadcrumbs={childBreadcrumbs}
-          // App analytics will not be renaming/cloning/deleting panels
-          setToast={setToasts}
-          page="app"
-          appId={appId}
-          updateAvailabilityVizId={updateAvailabilityVizId}
-          startTime={appStartTime}
-          endTime={appEndTime}
-          setStartTime={setStartTimeForApp}
-          setEndTime={setEndTimeForApp}
-          onAddClick={switchToEvent}
-          onEditClick={onEditClick}
-          tabId={tabId}
-          appType={appType}
-        />
-      </>
-    );
-  };
 
   const getNginxTab = (tabId: string) => {
     return (
