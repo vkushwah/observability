@@ -5,11 +5,18 @@
 
 import React, { useMemo } from 'react';
 import Plotly from 'plotly.js-dist';
+import { find, isEmpty } from 'lodash';
 import { Plt } from '../../../plotly/plot';
-import { PLOTLY_GAUGE_COLUMN_NUMBER } from '../../../../../../common/constants/explorer';
-import { DefaultGaugeChartParameters } from '../../../../../../common/constants/explorer';
+import {
+  AGGREGATIONS,
+  GROUPBY,
+  PLOTLY_GAUGE_COLUMN_NUMBER,
+} from '../../../../../../common/constants/explorer';
+import { DEFAULT_GAUGE_CHART_PARAMETERS } from '../../../../../../common/constants/explorer';
 import { ThresholdUnitType } from '../../../../event_analytics/explorer/visualizations/config_panel/config_panes/config_controls/config_thresholds';
 import { EmptyPlaceholder } from '../../../../event_analytics/explorer/visualizations/shared_components/empty_placeholder';
+import { IVisualizationContainerProps } from '../../../../../../common/types/explorer';
+import { getPropName } from '../../../../event_analytics/utils/utils';
 
 const {
   GaugeTitleSize,
@@ -17,22 +24,25 @@ const {
   OrientationDefault,
   TickLength,
   LegendPlacement,
-} = DefaultGaugeChartParameters;
+} = DEFAULT_GAUGE_CHART_PARAMETERS;
 
 export const Gauge = ({ visualizations, layout, config }: any) => {
   const {
-    data,
-    metadata: { fields },
-  } = visualizations.data.rawVizData;
+    data: {
+      rawVizData: {
+        data: queriedVizData,
+        metadata: { fields },
+      },
+      userConfigs,
+    },
+    vis: visMetaData,
+  }: IVisualizationContainerProps = visualizations;
 
   // data config parametrs
-  const { dataConfig = {}, layoutConfig = {} } = visualizations.data.userConfigs;
-  const dimensions = dataConfig?.dimensions
-    ? dataConfig.dimensions.filter((item) => item.name !== '')
-    : [];
-  const metrics = dataConfig?.metrics ? dataConfig.metrics.filter((item) => item.name !== '') : [];
-  const dimensionsLength = dimensions.length;
-  const metricsLength = metrics.length;
+  const { dataConfig = {}, layoutConfig = {} } = userConfigs;
+  let xaxes = dataConfig[GROUPBY] ?? [];
+  const series = dataConfig[AGGREGATIONS] ?? [];
+  const seriesLength = series.length;
   const numberOfGauges = dataConfig?.panelOptions?.numberOfGauges || DisplayDefaultGauges;
 
   // style parameters
@@ -44,104 +54,118 @@ export const Gauge = ({ visualizations, layout, config }: any) => {
   const orientation = dataConfig?.chartStyles?.orientation || OrientationDefault;
   const legendPlacement = dataConfig?.chartStyles?.legendPlacement || LegendPlacement;
 
-  const isEmptyPlot = !metricsLength;
+  const isEmptyPlot = !seriesLength || isEmpty(queriedVizData);
 
-  if (isEmptyPlot) return <EmptyPlaceholder icon={visualizations?.vis?.icontype} />;
+  const timestampField = find(fields, (field) => field.type === 'timestamp');
+
+  if (dataConfig.span && dataConfig.span.time_field && timestampField) {
+    xaxes = [timestampField, ...xaxes];
+  }
+
+  const xaxesLength = xaxes.length;
+
+  if (isEmptyPlot) return <EmptyPlaceholder icon={visMetaData?.icontype} />;
 
   const gaugeData: Plotly.Data[] = useMemo(() => {
     let calculatedGaugeData: Plotly.Data[] = [];
-    if (dimensionsLength || metricsLength) {
-      // case 1,2: no dimension, single/multiple metrics
-      if (!dimensionsLength && metricsLength >= 1) {
-        calculatedGaugeData = metrics.map((metric: any) => {
-          return {
-            field_name: metric.name,
-            value: data[metric.name][0],
-          };
-        });
-      }
-
-      // case 3: multiple dimensions and multiple metrics
-      if (dimensionsLength && metricsLength) {
-        const selectedDimensionsData = dimensions
-          .map((dimension: any) => data[dimension.name].slice(0, numberOfGauges))
-          .reduce((prev, cur) => {
-            return prev.map((i, j) => `${i}, ${cur[j]}`);
-          });
-        const selectedMetricsData = metrics.map((metric: any) =>
-          data[`${metric.aggregation}(${metric.name})`].slice(0, numberOfGauges)
-        );
-
-        selectedMetricsData.map((metricSlice: any, metricSliceIndex: number) => {
-          calculatedGaugeData = [
-            ...calculatedGaugeData,
-            ...metricSlice.map((metricSliceData: any, metricSliceDataIndex: number) => {
-              return {
-                field_name: `${selectedDimensionsData[metricSliceDataIndex]}, ${metrics[metricSliceIndex].name}`,
-                value: metricSliceData,
-              };
-            }),
-          ];
-        });
-      }
-
-      return calculatedGaugeData.map((gauge, index) => {
+    // case 1,2: no dimension, single/multiple metrics
+    if (!xaxesLength && seriesLength >= 1) {
+      calculatedGaugeData = series.map((seriesItem: any) => {
         return {
-          type: 'indicator',
-          mode: 'gauge+number+delta',
-          value: gauge.value || 0,
-          title: {
-            text: gauge.field_name,
-            font: { size: titleSize },
-            align: legendPlacement,
-          },
-          ...(valueSize && {
-            number: {
-              font: {
-                size: valueSize,
-              },
-            },
-          }),
-          domain: {
-            ...(orientation === 'auto' || orientation === 'h'
-              ? {
-                  row: Math.floor(index / PLOTLY_GAUGE_COLUMN_NUMBER),
-                  column: index % PLOTLY_GAUGE_COLUMN_NUMBER,
-                }
-              : {
-                  column: Math.floor(index / PLOTLY_GAUGE_COLUMN_NUMBER),
-                  row: index % PLOTLY_GAUGE_COLUMN_NUMBER,
-                }),
-          },
-          gauge: {
-            ...(showThresholdMarkers &&
-              thresholds &&
-              thresholds.length && {
-                threshold: {
-                  line: { color: thresholds[0]?.color || 'red', width: 4 },
-                  thickness: 0.75,
-                  value: thresholds[0]?.value || 0,
-                },
-              }),
-            //threshold labels
-            ...(showThresholdLabels && thresholds && thresholds.length
-              ? {
-                  axis: {
-                    ticktext: [gauge.value, ...thresholds.map((t: ThresholdUnitType) => t.name)],
-                    tickvals: [gauge.value, ...thresholds.map((t: ThresholdUnitType) => t.value)],
-                    ticklen: TickLength,
-                  },
-                }
-              : {}),
-          },
+          field_name: getPropName(seriesItem),
+          value: queriedVizData[getPropName(seriesItem)][0],
         };
       });
     }
-    return calculatedGaugeData;
+
+    // case 3: multiple dimensions and multiple metrics
+    if (xaxesLength && seriesLength) {
+      const selectedDimensionsData = xaxes
+        .map((dimension: any) => {
+          return queriedVizData[dimension.name]
+            ? queriedVizData[dimension.name].slice(0, numberOfGauges)
+            : [];
+        })
+        .reduce((prev, cur) => {
+          return prev.map((i, j) => `${i}, ${cur[j]}`);
+        });
+      const selectedSeriesData = series.map((seriesItem: any) => {
+        const propValue = getPropName(seriesItem);
+        return queriedVizData[`${propValue}`]
+          ? queriedVizData[`${propValue}`].slice(0, numberOfGauges)
+          : [];
+      });
+
+      selectedSeriesData.map((seriesSlice: any, seriesSliceIndex: number) => {
+        calculatedGaugeData = [
+          ...calculatedGaugeData,
+          ...seriesSlice.map((seriesSliceData: any, seriesSliceDataIndex: number) => {
+            return {
+              field_name: `${selectedDimensionsData[seriesSliceDataIndex]}, ${getPropName(
+                series[seriesSliceIndex]
+              )}`,
+              value: seriesSliceData,
+            };
+          }),
+        ];
+      });
+    }
+
+    return calculatedGaugeData.map((gauge, index) => {
+      return {
+        type: 'indicator',
+        mode: 'gauge+number+delta',
+        value: gauge.value || 0,
+        title: {
+          text: gauge.field_name,
+          font: { size: titleSize },
+          align: legendPlacement,
+        },
+        ...(valueSize && {
+          number: {
+            font: {
+              size: valueSize,
+            },
+          },
+        }),
+        domain: {
+          ...(orientation === 'auto' || orientation === 'h'
+            ? {
+                row: Math.floor(index / PLOTLY_GAUGE_COLUMN_NUMBER),
+                column: index % PLOTLY_GAUGE_COLUMN_NUMBER,
+              }
+            : {
+                column: Math.floor(index / PLOTLY_GAUGE_COLUMN_NUMBER),
+                row: index % PLOTLY_GAUGE_COLUMN_NUMBER,
+              }),
+        },
+        gauge: {
+          ...(showThresholdMarkers &&
+            thresholds &&
+            thresholds.length && {
+              threshold: {
+                line: { color: thresholds[0]?.color || 'red', width: 4 },
+                thickness: 0.75,
+                value: thresholds[0]?.value || 0,
+              },
+            }),
+          // threshold labels
+          ...(showThresholdLabels && thresholds && thresholds.length
+            ? {
+                axis: {
+                  ticktext: [gauge.value, ...thresholds.map((t: ThresholdUnitType) => t.name)],
+                  tickvals: [gauge.value, ...thresholds.map((t: ThresholdUnitType) => t.value)],
+                  ticklen: TickLength,
+                },
+              }
+            : {}),
+        },
+      };
+    });
   }, [
-    dimensions,
-    metrics,
-    data,
+    xaxes,
+    series,
+    queriedVizData,
     fields,
     thresholds,
     showThresholdMarkers,
@@ -170,19 +194,11 @@ export const Gauge = ({ visualizations, layout, config }: any) => {
       ...(layoutConfig.layout && layoutConfig.layout),
       title: dataConfig?.panelOptions?.title || layoutConfig.layout?.title || '',
     };
-  }, [
-    data,
-    layout,
-    gaugeData.length,
-    layoutConfig.layout,
-    dataConfig?.panelOptions?.title,
-    orientation,
-  ]);
+  }, [layout, gaugeData.length, layoutConfig.layout, dataConfig?.panelOptions?.title, orientation]);
 
   const mergedConfigs = {
     ...config,
     ...(layoutConfig.config && layoutConfig.config),
   };
-
   return <Plt data={gaugeData} layout={mergedLayout} config={mergedConfigs} />;
 };

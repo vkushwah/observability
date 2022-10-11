@@ -6,6 +6,7 @@
 import { History } from 'history';
 import Plotly from 'plotly.js-dist';
 import { QueryManager } from 'common/query_manager';
+import { VIS_CHART_TYPES } from '../../common/constants/shared';
 import {
   RAW_QUERY,
   SELECTED_FIELDS,
@@ -16,6 +17,10 @@ import {
   FINAL_QUERY,
   SELECTED_TIMESTAMP,
   SELECTED_DATE_RANGE,
+  GROUPBY,
+  AGGREGATIONS,
+  CUSTOM_LABEL,
+  BREAKDOWNS,
 } from '../constants/explorer';
 import {
   CoreStart,
@@ -97,7 +102,7 @@ export interface ILogExplorerProps {
   ) => void;
   savedObjectId: string;
   getExistingEmptyTab: (params: EmptyTabParams) => string;
-  qm: QueryManager;
+  queryManager: QueryManager;
 }
 
 export interface IExplorerProps {
@@ -129,7 +134,7 @@ export interface IExplorerProps {
   appBaseQuery?: string;
   callback?: any;
   callbackInApp?: any;
-  qm: QueryManager;
+  queryManager: QueryManager;
 }
 
 export interface SavedQuery {
@@ -277,10 +282,11 @@ export interface LiveTailProps {
 export interface ConfigListEntry {
   label: string;
   aggregation: string;
-  custom_label: string;
+  [CUSTOM_LABEL]: string;
   name: string;
   side: string;
   type: string;
+  alias?: string;
 }
 
 export interface HistogramConfigList {
@@ -295,9 +301,9 @@ export interface DimensionSpan {
 }
 
 export interface ConfigList {
-  dimensions?: ConfigListEntry[] | HistogramConfigList[];
-  metrics?: ConfigListEntry[];
-  breakdowns?: ConfigListEntry[] | HistogramConfigList[];
+  [GROUPBY]?: ConfigListEntry[] | HistogramConfigList[];
+  [AGGREGATIONS]?: ConfigListEntry[];
+  [BREAKDOWNS]?: ConfigListEntry[] | HistogramConfigList[];
   span?: DimensionSpan;
 }
 
@@ -315,11 +321,42 @@ export interface EventAnalyticsProps {
   timestampUtils: TimestampUtils;
   http: HttpStart;
   notifications: NotificationsStart;
-  qm: QueryManager;
+  queryManager: QueryManager;
 }
 
 export interface DataConfigPanelProps {
   fieldOptionList: IField[];
   visualizations: IVisualizationContainerProps;
-  qm?: QueryManager;
+  queryManager?: QueryManager;
+}
+export interface GetTooltipHoverInfoType {
+  tooltipMode: string;
+  tooltipText: string;
+}
+
+export interface SelectedConfigItem {
+  index: number;
+  name: string;
+}
+
+export interface ParentUnitType {
+  name: string;
+  label: string;
+  type: string;
+}
+
+export interface TreemapParentsProps {
+  selectedAxis: ParentUnitType[];
+  setSelectedParentItem: (item: { isClicked: boolean; index: number }) => void;
+  handleUpdateParentFields: (arr: ParentUnitType[]) => void;
+}
+
+export interface DataConfigPanelFieldProps {
+  list: ConfigListEntry[];
+  sectionName: string;
+  visType: VIS_CHART_TYPES;
+  addButtonText: string;
+  handleServiceAdd: (name: string) => void;
+  handleServiceRemove: (index: number, name: string) => void;
+  handleServiceEdit: (isClose: boolean, arrIndex: number, sectionName: string) => void;
 }

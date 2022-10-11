@@ -14,10 +14,12 @@ import {
   EuiIcon,
   EuiText,
 } from '@elastic/eui';
-import { batch, useDispatch, useSelector } from 'react-redux';
 import { cloneDeep } from 'lodash';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import {
+  AGGREGATIONS,
   AVAILABLE_FIELDS,
+  GROUPBY,
   SELECTED_FIELDS,
 } from '../../../../../../../../common/constants/explorer';
 import {
@@ -40,6 +42,7 @@ export const LogsViewConfigPanelItem = ({
   const { tabId, curVisId, changeVisualizationConfig } = useContext<any>(TabContext);
   const explorerFields = useSelector(selectFields)[tabId];
   const { data } = visualizations;
+  const { availableFields, queriedFields, selectedFields } = data.explorer?.explorerFields;
   const { userConfigs } = data;
 
   const initialConfigEntry = {
@@ -62,10 +65,10 @@ export const LogsViewConfigPanelItem = ({
   }, [userConfigs?.dataConfig, visualizations.vis.name]);
 
   useEffect(() => {
-    if (fieldOptionList.length === 0) {
+    if (queriedFields.length === 0) {
       setConfigList({
-        metrics: [],
-        dimensions: visualizations?.data?.explorer?.explorerFields?.selectedFields.map((field) => ({
+        [AGGREGATIONS]: [],
+        [GROUPBY]: visualizations?.data?.explorer?.explorerFields?.selectedFields.map((field) => ({
           ...field,
           label: field.name,
         })),
@@ -74,7 +77,7 @@ export const LogsViewConfigPanelItem = ({
   }, [visualizations.data.explorer.explorerFields]);
 
   const handleServiceRemove = (index: number, name: string) => {
-    if (fieldOptionList.length !== 0) {
+    if (queriedFields.length !== 0) {
       return;
     }
     const list = { ...configList };
@@ -90,11 +93,11 @@ export const LogsViewConfigPanelItem = ({
   };
 
   const updateChart = () => {
-    if ((configList.dimensions as ConfigListEntry[]).some((field) => field.label === '')) {
+    if ((configList[GROUPBY] as ConfigListEntry[]).some((field) => field.label === '')) {
       return;
     }
     const nextFields = cloneDeep(explorerFields);
-    const selectedFields = (configList.dimensions as ConfigListEntry[]).map((field) => ({
+    const selectedFields = (configList[GROUPBY] as ConfigListEntry[]).map((field) => ({
       name: field.name,
       type: field.type,
     }));
@@ -129,8 +132,8 @@ export const LogsViewConfigPanelItem = ({
           dataConfig: {
             ...userConfigs.dataConfig,
             valueOptions: {
-              dimensions: configList.dimensions,
-              metrics: configList.metrics,
+              [GROUPBY]: configList[GROUPBY],
+              [AGGREGATIONS]: configList[AGGREGATIONS],
             },
           },
         },
@@ -139,10 +142,10 @@ export const LogsViewConfigPanelItem = ({
   };
 
   const getAvailableLogsViewOptions = () => {
-    if (fieldOptionList.length !== 0) {
+    if (queriedFields.length !== 0) {
       return [];
     }
-    const dimensionNames = (configList.dimensions as ConfigListEntry[]).map((field) => field.name);
+    const dimensionNames = (configList[GROUPBY] as ConfigListEntry[]).map((field) => field.name);
     const availableFields = visualizations?.data?.explorer?.explorerFields?.availableFields.filter(
       (field) => !dimensionNames.includes(field.name)
     );
@@ -154,19 +157,19 @@ export const LogsViewConfigPanelItem = ({
 
   const updateLogsViewConfig = (value: string, field: ConfigListEntry) => {
     const list = { ...configList };
-    const index = (list.dimensions as ConfigListEntry[]).findIndex(
+    const index = (list[GROUPBY] as ConfigListEntry[]).findIndex(
       (dim) => dim.label === field.label
     );
     const selectedField = visualizations?.data?.explorer?.explorerFields?.availableFields.find(
       (fld) => fld.name === value
     );
     const newField = { ...selectedField, label: value };
-    list.dimensions[index] = newField;
+    list[GROUPBY][index] = newField;
     setConfigList(list);
   };
 
   const getLogsViewUI = () => {
-    const list = configList.dimensions ? configList.dimensions : [];
+    const list = configList[GROUPBY] ? configList[GROUPBY] : [];
     const listUI = list.map((field, index) => (
       <EuiFormRow
         label="Field"
@@ -175,7 +178,7 @@ export const LogsViewConfigPanelItem = ({
             <EuiIcon
               type="cross"
               color="danger"
-              onClick={() => handleServiceRemove(index, 'dimensions')}
+              onClick={() => handleServiceRemove(index, GROUPBY)}
             />
           </EuiText>
         }
@@ -186,7 +189,7 @@ export const LogsViewConfigPanelItem = ({
           singleSelection={{ asPlainText: true }}
           options={getAvailableLogsViewOptions()}
           selectedOptions={[{ label: field.label }]}
-          isDisabled={fieldOptionList.length !== 0}
+          isDisabled={queriedFields.length !== 0}
           onChange={(e) =>
             updateLogsViewConfig(e.length > 0 ? e[0].label : '', field as ConfigListEntry)
           }
@@ -203,8 +206,8 @@ export const LogsViewConfigPanelItem = ({
               fullWidth
               iconType="plusInCircleFilled"
               color="primary"
-              onClick={() => handleServiceAdd('dimensions')}
-              disabled={fieldOptionList.length !== 0}
+              onClick={() => handleServiceAdd(GROUPBY)}
+              disabled={queriedFields.length !== 0}
             >
               Add
             </EuiButton>
@@ -234,7 +237,7 @@ export const LogsViewConfigPanelItem = ({
           iconType="play"
           onClick={updateChart}
           size="s"
-          isDisabled={fieldOptionList.length !== 0}
+          isDisabled={queriedFields.length !== 0}
         >
           Update chart
         </EuiButton>

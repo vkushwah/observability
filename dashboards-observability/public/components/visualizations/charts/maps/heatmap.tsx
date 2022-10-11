@@ -2,49 +2,62 @@
  * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import React, { useMemo } from 'react';
-import { uniq, has, isEmpty, indexOf } from 'lodash';
-import Plotly from 'plotly.js-dist';
 import { colorPalette } from '@elastic/eui';
-import { Plt } from '../../plotly/plot';
-import { EmptyPlaceholder } from '../../../event_analytics/explorer/visualizations/shared_components/empty_placeholder';
+import { has, isEmpty, uniq } from 'lodash';
+import Plotly from 'plotly.js-dist';
 import {
   HEATMAP_PALETTE_COLOR,
-  SINGLE_COLOR_PALETTE,
-  OPACITY,
   HEATMAP_SINGLE_COLOR,
+  OPACITY,
+  SINGLE_COLOR_PALETTE,
 } from '../../../../../common/constants/colors';
-import { hexToRgb, lightenColor } from '../../../../components/event_analytics/utils/utils';
-import { NUMERICAL_FIELDS } from '../../../../../common/constants/shared';
+import {
+  hexToRgb,
+  lightenColor,
+  getPropName,
+} from '../../../../components/event_analytics/utils/utils';
+import { IVisualizationContainerProps } from '../../../../../common/types/explorer';
+import { EmptyPlaceholder } from '../../../event_analytics/explorer/visualizations/shared_components/empty_placeholder';
+import { Plt } from '../../plotly/plot';
+import { AGGREGATIONS, GROUPBY } from '../../../../../common/constants/explorer';
 
 export const HeatMap = ({ visualizations, layout, config }: any) => {
   const {
-    data,
-    metadata: { fields },
-  } = visualizations.data.rawVizData;
-  const { dataConfig = {}, layoutConfig = {} } = visualizations?.data?.userConfigs;
+    data: {
+      defaultAxes,
+      indexFields,
+      query,
+      rawVizData: {
+        data: queriedVizData,
+        metadata: { fields },
+      },
+      userConfigs,
+    },
+    vis: visMetaData,
+  }: IVisualizationContainerProps = visualizations;
+  const { dataConfig = {}, layoutConfig = {} } = userConfigs;
 
-  if (fields.length < 3) return <EmptyPlaceholder icon={visualizations?.vis?.icontype} />;
+  if (fields.length < 3) return <EmptyPlaceholder icon={visMetaData?.icontype} />;
 
-  const xaxisField = dataConfig?.dimensions[0];
-  const yaxisField = dataConfig?.dimensions[1];
-  const zMetrics = dataConfig?.metrics[0];
+  const xaxisField = dataConfig[GROUPBY][0];
+  const yaxisField = dataConfig[GROUPBY][1];
+  const zMetrics = dataConfig[AGGREGATIONS][0];
 
   if (
     isEmpty(xaxisField) ||
     isEmpty(yaxisField) ||
     isEmpty(zMetrics) ||
-    isEmpty(data[xaxisField.label]) ||
-    isEmpty(data[yaxisField.label]) ||
-    isEmpty(data[`${zMetrics.aggregation}(${zMetrics.name})`]) ||
-    dataConfig?.dimensions.length > 2 ||
-    dataConfig?.metrics.length > 1
+    isEmpty(queriedVizData[xaxisField.label]) ||
+    isEmpty(queriedVizData[yaxisField.label]) ||
+    isEmpty(queriedVizData[getPropName(zMetrics)]) ||
+    dataConfig[GROUPBY].length > 2 ||
+    dataConfig[AGGREGATIONS].length > 1
   )
-    return <EmptyPlaceholder icon={visualizations?.vis?.icontype} />;
+    return <EmptyPlaceholder icon={visMetaData?.icontype} />;
 
-  const uniqueYaxis = uniq(data[yaxisField.label]);
-  const uniqueXaxis = uniq(data[xaxisField.label]);
+  const uniqueYaxis = uniq(queriedVizData[yaxisField.label]);
+  const uniqueXaxis = uniq(queriedVizData[xaxisField.label]);
   const uniqueYaxisLength = uniqueYaxis.length;
   const uniqueXaxisLength = uniqueXaxis.length;
   const tooltipMode =
@@ -79,9 +92,9 @@ export const HeatMap = ({ visualizations, layout, config }: any) => {
     const buckets = {};
 
     // maps bukcets to metrics
-    for (let i = 0; i < data[xaxisField.label].length; i++) {
-      buckets[`${data[xaxisField.label][i]},${data[yaxisField.label][i]}`] =
-        data[`${zMetrics.aggregation}(${zMetrics.name})`][i];
+    for (let i = 0; i < queriedVizData[xaxisField.label].length; i++) {
+      buckets[`${queriedVizData[xaxisField.label][i]},${queriedVizData[yaxisField.label][i]}`] =
+        queriedVizData[getPropName(zMetrics)][i];
     }
 
     // initialize empty 2 dimensional array, inner loop for each xaxis field, outer loop for yaxis
@@ -104,7 +117,7 @@ export const HeatMap = ({ visualizations, layout, config }: any) => {
 
     return heapMapZaxis;
   }, [
-    data,
+    queriedVizData,
     uniqueYaxis,
     uniqueXaxis,
     uniqueYaxisLength,
