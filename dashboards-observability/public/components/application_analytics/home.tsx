@@ -5,16 +5,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-console */
 
-import React, { ReactChild, useEffect, useState } from 'react';
+import React, { ReactChild, useEffect, useState, useRef } from 'react';
 import { Route, RouteComponentProps, Switch } from 'react-router-dom';
 import DSLService from 'public/services/requests/dsl';
 import PPLService from 'public/services/requests/ppl';
 import SavedObjects from 'public/services/saved_objects/event_analytics/saved_objects';
 import TimestampUtils from 'public/services/timestamp/timestamp';
-import { EuiGlobalToastList, EuiLink } from '@elastic/eui';
+import { EuiGlobalToastList, EuiLink, EuiSelectOption } from '@elastic/eui';
 import { Toast } from '@elastic/eui/src/components/toast/global_toast_list';
 import { isEmpty, last } from 'lodash';
-import { useDispatch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
 import { AppTable } from './components/app_table';
 import { Application } from './components/application';
 import { CreateApp } from './components/create';
@@ -23,11 +23,19 @@ import { FilterType } from '../trace_analytics/components/common/filters/filters
 import { handleIndicesExistRequest } from '../trace_analytics/requests/request_handler';
 import { ObservabilitySideBar } from '../common/side_nav';
 import { NotificationsStart } from '../../../../../src/core/public';
+import { changeQuery } from '../event_analytics/redux/slices/query_slice';
+import { updateTabName } from '../event_analytics/redux/slices/query_tab_slice';
 import { APP_ANALYTICS_API_PREFIX } from '../../../common/constants/application_analytics';
 import {
   ApplicationRequestType,
   ApplicationType,
 } from '../../../common/types/application_analytics';
+import {
+  SAVED_OBJECT_ID,
+  SAVED_OBJECT_TYPE,
+  SAVED_QUERY,
+  SAVED_VISUALIZATION,
+} from '../../../common/constants/explorer';
 import {
   calculateAvailability,
   fetchPanelsVizIdList,
@@ -38,6 +46,9 @@ import {
   CUSTOM_PANELS_API_PREFIX,
   CUSTOM_PANELS_DOCUMENTATION_URL,
 } from '../../../common/constants/custom_panels';
+import { AllApps } from '../integrations/plugins/all_apps';
+import { fetchAppById } from '../application_analytics/helpers/utils';
+import { INTEGRATION, QUERY_VIS_TYPES } from '../../../common/constants/shared';
 
 export type AppAnalyticsCoreDeps = TraceAnalyticsCoreDeps;
 
@@ -47,6 +58,7 @@ interface HomeProps extends RouteComponentProps, AppAnalyticsCoreDeps {
   savedObjects: SavedObjects;
   timestampUtils: TimestampUtils;
   notifications: NotificationsStart;
+  appType: string;
 }
 
 export interface AppAnalyticsComponentDeps extends TraceAnalyticsComponentDeps {
@@ -69,9 +81,11 @@ export const Home = (props: HomeProps) => {
     http,
     chrome,
     notifications,
+    appType,
   } = props;
   const [triggerSwitchToEvent, setTriggerSwitchToEvent] = useState(0);
   const dispatch = useDispatch();
+  const selectedPanelNameRef = useRef('');
   const [applicationList, setApplicationList] = useState<ApplicationType[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [indicesExist, setIndicesExist] = useState(true);
@@ -80,6 +94,21 @@ export const Home = (props: HomeProps) => {
   const [filters, setFilters] = useState<FilterType[]>(
     storedFilters ? JSON.parse(storedFilters) : []
   );
+  const [visWithAvailability, setVisWithAvailability] = useState<EuiSelectOption[]>([]);
+
+  const [application, setApplication] = useState<ApplicationType>({
+    id: '',
+    dateCreated: '',
+    dateModified: '',
+    name: '',
+    description: '',
+    baseQuery: '',
+    servicesEntities: [],
+    traceGroups: [],
+    panelId: '',
+    availability: { name: '', color: '', availabilityVisId: '' },
+  });
+
   const [name, setName] = useState(sessionStorage.getItem('AppAnalyticsName') || '');
   const [description, setDescription] = useState(
     sessionStorage.getItem('AppAnalyticsDescription') || ''
@@ -149,14 +178,21 @@ export const Home = (props: HomeProps) => {
     setQueryWithStorage('');
   };
 
-  const moveToApp = (id: string, type: string) => {
-    window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics/${id}`);
+  const moveToApp = (id: string, type: string, appType?: string | null) => {
+    appType === INTEGRATION
+      ? window.location.assign(`${last(parentBreadcrumbs)!.href}integrations/plugins/${id}`)
+      : window.location.assign(`${last(parentBreadcrumbs)!.href}application_analytics/${id}`);
     if (type === 'createSetAvailability') {
       setTriggerSwitchToEvent(2);
     }
   };
 
-  const createPanelForApp = (applicationId: string, appName: string, type: string) => {
+  const createPanelForApp = (
+    applicationId: string,
+    appName: string,
+    type: string,
+    appType?: string | null
+  ) => {
     return http
       .post(`${CUSTOM_PANELS_API_PREFIX}/panels`, {
         body: JSON.stringify({
@@ -165,7 +201,7 @@ export const Home = (props: HomeProps) => {
         }),
       })
       .then((res) => {
-        updateApp(applicationId, { panelId: res.newPanelId }, type);
+        updateApp(applicationId, { panelId: res.newPanelId }, type, appName, appType);
       })
       .catch((err) => {
         setToast(
@@ -238,8 +274,94 @@ export const Home = (props: HomeProps) => {
       });
   };
 
+  // Add visualization to application's panel
+  const addVisualizationToPanel = async (
+    appId: string,
+    visualizationId: string,
+    panelId: string
+  ) => {
+    return http
+      .post(`${CUSTOM_PANELS_API_PREFIX}/visualizations`, {
+        body: JSON.stringify({
+          panelId,
+          savedVisualizationId: visualizationId,
+        }),
+      })
+      .then(() => {
+        fetchAppById(
+          http,
+          pplService,
+          appId,
+          setApplication,
+          setAppConfigs,
+          setVisWithAvailability,
+          setToasts
+        );
+      })
+      .catch((err) => {
+        // setToasts(`Error in adding ${visualizationName} visualization to the panel`, 'danger');
+        console.error(err);
+      });
+  };
+  const setStartTimeForApp = (appName: string, newStartTime: string) => {
+    sessionStorage.setItem(`${appName}StartTime`, newStartTime);
+  };
+  const setEndTimeForApp = (appName: string, newEndTime: string) => {
+    sessionStorage.setItem(`${appName}EndTime`, newEndTime);
+  };
+
+  // need to move to common , copied from explorer
+  const handleSavingObject = (appId, appName, type, panelId, chartObj) => {
+    // create new saved visualization
+    savedObjects
+      .createSavedVisualization({
+        query: chartObj.query,
+        fields: [],
+        dateRange: ['now/y', 'now'],
+        type: chartObj.type,
+        name: `${chartObj.type} chart ${appName} ${type}`,
+        timestamp: '@timestamp',
+        applicationId: appId,
+        userConfigs: JSON.stringify({}),
+        description: '',
+      })
+      .then((res: any) => {
+        batch(() => {
+          addVisualizationToPanel(appId, res.objectId, panelId);
+          setStartTimeForApp(appName, 'now/y');
+          setEndTimeForApp(appName, 'now');
+          dispatch(
+            changeQuery({
+              undefined,
+              query: {
+                [SAVED_OBJECT_ID]: res.objectId,
+                [SAVED_OBJECT_TYPE]: SAVED_VISUALIZATION,
+              },
+            })
+          );
+          dispatch(
+            updateTabName({
+              undefined,
+              tabName: selectedPanelNameRef.current,
+            })
+          );
+        });
+        setToast('New visualization');
+        return res;
+      })
+      .catch((error: any) => {
+        notifications.toasts.addError(error, {
+          title: `Cannot save Visualization '${selectedPanelNameRef.current}'`,
+        });
+      });
+  };
+
   // Create a new application
-  const createApp = (application: ApplicationRequestType, type: string) => {
+  const createApp = (
+    application: ApplicationRequestType,
+    type: string,
+    appTypeIntegration?: string | null
+  ) => {
     const toast = isNameValid(
       application.name,
       applicationList.map((obj) => obj.name)
@@ -256,6 +378,7 @@ export const Home = (props: HomeProps) => {
       servicesEntities: application.servicesEntities,
       traceGroups: application.traceGroups,
       availabilityVisId: '',
+      // appType: application.appType, TODO uncomment this when backend api is fixed to accept this new field
     };
 
     return http
@@ -263,8 +386,8 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then(async (res) => {
-        createPanelForApp(res.newAppId, application.name, type);
-        setToast(`Application "${application.name}" successfully created!`);
+        createPanelForApp(res.newAppId, application.name, type, appTypeIntegration);
+        // setToast(`Application "${application.name}" successfully created!`);
         clearStorage();
       })
       .catch((err) => {
@@ -314,7 +437,9 @@ export const Home = (props: HomeProps) => {
   const updateApp = (
     appId: string,
     updateAppData: Partial<ApplicationRequestType>,
-    type: string
+    type: string,
+    appName?: string,
+    appType?: string | null
   ) => {
     const requestBody = {
       appId,
@@ -326,13 +451,18 @@ export const Home = (props: HomeProps) => {
         body: JSON.stringify(requestBody),
       })
       .then((res) => {
+        if (appType === INTEGRATION) {
+          for (let i = 0; i < QUERY_VIS_TYPES.length; i++) {
+            handleSavingObject(appId, appName, type, updateAppData.panelId, QUERY_VIS_TYPES[i]);
+          }
+        }
         if (type === 'update') {
           setToast('Application successfully updated.');
           clearStorage();
-          moveToApp(res.updatedAppId, type);
+          moveToApp(res.updatedAppId, type, appType);
         }
         if (type.startsWith('create')) {
-          moveToApp(res.updatedAppId, type);
+          moveToApp(res.updatedAppId, type, appType);
         }
       })
       .catch((err) => {
@@ -388,7 +518,7 @@ export const Home = (props: HomeProps) => {
       <Switch>
         <Route
           exact
-          path={['/', '/application_analytics']}
+          path={['/', '/application_analytics', '/integrations', '/integrations/plugins']}
           render={() => (
             <ObservabilitySideBar>
               <AppTable
@@ -399,6 +529,7 @@ export const Home = (props: HomeProps) => {
                 deleteApplication={deleteApp}
                 clearStorage={clearStorage}
                 moveToApp={moveToApp}
+                appType={appType}
                 {...commonProps}
               />
             </ObservabilitySideBar>
@@ -406,23 +537,40 @@ export const Home = (props: HomeProps) => {
         />
         <Route
           exact
-          path={['/application_analytics/create', '/application_analytics/edit/:id+']}
+          path={[
+            '/application_analytics/create',
+            '/application_analytics/edit/:id+',
+            '/integrations/plugins/edit/:id+',
+            '/application_analytics/create/:id+',
+          ]}
+          render={(routerProps) => {
+            const query = new URLSearchParams(routerProps.location.search);
+            return (
+              <CreateApp
+                dslService={dslService}
+                pplService={pplService}
+                createApp={createApp}
+                updateApp={updateApp}
+                setToasts={setToast}
+                clearStorage={clearStorage}
+                existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
+                appType={query.get('type')}
+                appName={query.get('app')}
+                {...commonProps}
+              />
+            );
+          }}
+        />
+        <Route
+          exact
+          path={['/integrations/plugins/all_apps']}
           render={(routerProps) => (
-            <CreateApp
-              dslService={dslService}
-              pplService={pplService}
-              createApp={createApp}
-              updateApp={updateApp}
-              setToasts={setToast}
-              clearStorage={clearStorage}
-              existingAppId={decodeURIComponent(routerProps.match.params.id) || ''}
-              {...commonProps}
-            />
+            <AllApps parentBreadcrumbs={parentBreadcrumbs} http={http} chrome={chrome} />
           )}
         />
         <Route
           exact
-          path={'/application_analytics/:id+'}
+          path={['/application_analytics/:id+', '/integrations/plugins/:id+']}
           render={(routerProps) => (
             <Application
               disabled={false}
@@ -435,6 +583,7 @@ export const Home = (props: HomeProps) => {
               setToasts={setToast}
               updateApp={updateApp}
               callback={callback}
+              appType={appType}
               {...commonProps}
             />
           )}

@@ -41,7 +41,6 @@ export const useFetchVisualizations = ({
     errorHandler: (error: any) => void
   ) => {
     setIsVisLoading(true);
-
     await pplService
       .fetch({
         query,

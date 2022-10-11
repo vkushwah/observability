@@ -37,12 +37,13 @@ import moment from 'moment';
 import { DeleteModal } from '../../common/helpers/delete_modal';
 import { AppAnalyticsComponentDeps } from '../home';
 import { getCustomModal } from '../../custom_panels/helpers/modal_containers';
-import { pageStyles, UI_DATE_FORMAT } from '../../../../common/constants/shared';
+import { INTEGRATION, pageStyles, UI_DATE_FORMAT } from '../../../../common/constants/shared';
 import { ApplicationType, AvailabilityType } from '../../../../common/types/application_analytics';
 
 interface AppTableProps extends AppAnalyticsComponentDeps {
   loading: boolean;
   applications: ApplicationType[];
+  appType: string;
   fetchApplications: () => void;
   renameApplication: (newAppName: string, appId: string) => void;
   deleteApplication: (appList: string[], panelIdList: string[], toastMessage?: string) => void;
@@ -55,6 +56,7 @@ export function AppTable(props: AppTableProps) {
     chrome,
     applications,
     parentBreadcrumbs,
+    appType,
     fetchApplications,
     renameApplication,
     deleteApplication,
@@ -66,16 +68,23 @@ export function AppTable(props: AppTableProps) {
   const [isActionsPopoverOpen, setIsActionsPopoverOpen] = useState(false);
   const [modalLayout, setModalLayout] = useState(<EuiOverlayMask />);
   const [selectedApplications, setSelectedApplications] = useState<ApplicationType[]>([]);
-  const createButtonText = 'Create application';
+  const createButtonText = appType === INTEGRATION ? 'Add Integration' : 'Create application';
+  const breadCrumbs =
+    appType === INTEGRATION
+      ? {
+          text: 'Integrations',
+          href: '#/integrations/plugins',
+        }
+      : {
+          text: 'Application analytics',
+          href: '#/application_analytics',
+        };
 
   useEffect(() => {
-    chrome.setBreadcrumbs([
-      ...parentBreadcrumbs,
-      {
-        text: 'Application analytics',
-        href: '#/application_analytics',
-      },
-    ]);
+    chrome.setBreadcrumbs([...parentBreadcrumbs, breadCrumbs]);
+  }, [appType]);
+
+  useEffect(() => {
     clear();
     fetchApplications();
   }, []);
@@ -209,6 +218,7 @@ export function AppTable(props: AppTableProps) {
     }
   };
 
+  const appLink = appType === INTEGRATION ? '#/integrations/plugins/' : '#/application_analytics/';
   const tableColumns = [
     {
       field: 'name',
@@ -216,10 +226,7 @@ export function AppTable(props: AppTableProps) {
       sortable: true,
       truncateText: true,
       render: (value, record) => (
-        <EuiLink
-          data-test-subj={`${record.name}ApplicationLink`}
-          href={`#/application_analytics/${record.id}`}
-        >
+        <EuiLink data-test-subj={`${record.name}ApplicationLink`} href={`${appLink}${record.id}`}>
           {_.truncate(record.name, { length: 100 })}
         </EuiLink>
       ),
@@ -251,6 +258,9 @@ export function AppTable(props: AppTableProps) {
     },
   ] as Array<EuiTableFieldDataColumnType<ApplicationType>>;
 
+  const allApps =
+    appType === INTEGRATION ? '#/integrations/plugins/all_apps' : '#/application_analytics/create';
+
   return (
     <div style={pageStyles}>
       <EuiPage>
@@ -258,18 +268,21 @@ export function AppTable(props: AppTableProps) {
           <EuiPageHeader>
             <EuiPageHeaderSection>
               <EuiTitle size="l">
-                <h1>Overview</h1>
+                {appType === INTEGRATION ? <h1>Integrations</h1> : <h1>Overview</h1>}
               </EuiTitle>
             </EuiPageHeaderSection>
           </EuiPageHeader>
           <EuiPageContent id="applicationArea">
             <EuiPageContentHeader>
               <EuiPageContentHeaderSection>
-                <EuiTitle data-test-subj="applicationHomePageTitle" size="s">
-                  <h3>
-                    Applications<span className="panel-header-count"> ({applications.length})</span>
-                  </h3>
-                </EuiTitle>
+                {appType !== INTEGRATION && (
+                  <EuiTitle data-test-subj="applicationHomePageTitle" size="s">
+                    <h3>
+                      Applications
+                      <span className="panel-header-count"> ({applications.length})</span>
+                    </h3>
+                  </EuiTitle>
+                )}
               </EuiPageContentHeaderSection>
               <EuiPageContentHeaderSection>
                 <EuiFlexGroup gutterSize="s">
@@ -284,7 +297,7 @@ export function AppTable(props: AppTableProps) {
                     </EuiPopover>
                   </EuiFlexItem>
                   <EuiFlexItem>
-                    <EuiButton fill href="#/application_analytics/create">
+                    <EuiButton fill href={allApps}>
                       {createButtonText}
                     </EuiButton>
                   </EuiFlexItem>
@@ -324,7 +337,7 @@ export function AppTable(props: AppTableProps) {
                 <EuiSpacer size="m" />
                 <EuiFlexGroup justifyContent="center">
                   <EuiFlexItem grow={false}>
-                    <EuiButton fullWidth={false} href={`#/application_analytics/create`}>
+                    <EuiButton fullWidth={false} href={allApps}>
                       {createButtonText}
                     </EuiButton>
                   </EuiFlexItem>

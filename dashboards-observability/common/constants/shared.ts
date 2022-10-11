@@ -182,3 +182,35 @@ export const DEFAULT_CHART_STYLES: DefaultChartStylesProps = {
 };
 
 export const FILLOPACITY_DIV_FACTOR = 200;
+
+export const INTEGRATION = 'integration';
+
+export const QUERY_VIS_TYPES = [
+  {
+    type: visChartTypes.Line,
+    query:
+      'source = nginx_2 | stats avg( upstream_response_time )as Response_Time , count() as response_count by span( @timestamp ,1h)',
+  },
+  {
+    type: visChartTypes.Line,
+    query: 'source = nginx_2 | stats max(bytes_sent), avg(bytes_sent) by remote_addr',
+  },
+  {
+    type: visChartTypes.Bar,
+    query: 'source = nginx_2 | stats count() by request_method',
+  },
+  {
+    type: visChartTypes.Bar,
+    query:
+      'source = nginx_2 |  where status > 400 or status < 599 | stats count() by span( @timestamp , 1d)',
+  },
+  {
+    type: visChartTypes.Line,
+    query: 'source = nginx_2 |  stats avg( bytes_sent ) by span( @timestamp ,1d)',
+  },
+  {
+    type: visChartTypes.Bar,
+    query:
+      'source = nginx_2 | stats avg( upstream_response_time ) as response_time by span( @timestamp , 1h)',
+  },
+];
