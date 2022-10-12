@@ -193,7 +193,7 @@ export const DataTable = ({ visualizations, layout, config }: any) => {
   };
 
   return (
-    <>
+    <div className="data-table-container">
       {showTableHeader && (
         <GridHeader
           isFullScreen={isFullScreen}
@@ -264,6 +264,6 @@ export const DataTable = ({ visualizations, layout, config }: any) => {
           </EuiFlexGroup>
         </CustomOverlay>
       )}
-    </>
+    </div>
   );
 };
