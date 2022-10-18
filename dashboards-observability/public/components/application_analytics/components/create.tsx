@@ -106,7 +106,7 @@ export const CreateApp = (props: CreateAppProps) => {
   });
 
   const breadCrumbs =
-    appType === INTEGRATION
+    appType === INTEGRATION.integration
       ? [
           {
             text: 'Integrations',
@@ -161,64 +161,6 @@ export const CreateApp = (props: CreateAppProps) => {
     setIsFlyoutVisible(false);
   };
 
-  const closeIntegrationFlyout = () => {
-    setIsFlyoutVisibleIntegration(false);
-  };
-
-  const openIntegrationFlyout = () => {
-    setIsFlyoutVisibleIntegration(true);
-  };
-
-  let integrationFlyout;
-  if (isFlyoutVisibleIntegration) {
-    integrationFlyout = (
-      <FlyoutContainers
-        closeFlyout={closeIntegrationFlyout}
-        flyoutHeader={
-          <EuiPageHeader>
-            <EuiPageHeaderSection>
-              {/* <EuiTitle data-test-subj="createPageTitle" size="l">
-                <h1>{appName} Doc</h1>
-              </EuiTitle> */}
-            </EuiPageHeaderSection>
-          </EuiPageHeader>
-        }
-        flyoutBody={
-          <EuiPageContent id="appInfo">
-            <EuiPageContentHeader>
-              <EuiPageContentHeaderSection>
-                <EuiTitle size="m">
-                  <h2>{appName} information</h2>
-                </EuiTitle>
-              </EuiPageContentHeaderSection>
-            </EuiPageContentHeader>
-            <EuiHorizontalRule />
-            <EuiText grow={false}>
-              NGINX is open source software for web serving, reverse proxying, caching, load
-              balancing, media streaming, and more. It started out as a web server designed for
-              maximum performance and stability. In addition to its HTTP server capabilities, NGINX
-              can also function as a proxy server for email (IMAP, POP3, and SMTP) and a reverse
-              proxy and load balancer for HTTP, TCP, and UDP servers.
-            </EuiText>
-            <EuiLink href="https://www.nginx.com/resources/glossary/nginx/" target="_blank">
-              Click here to know more about NGINX
-            </EuiLink>
-          </EuiPageContent>
-        }
-        flyoutFooter={
-          <EuiFlyoutFooter>
-            <EuiFlexGroup gutterSize="s" justifyContent="spaceBetween">
-              <EuiFlexItem grow={false}>
-                <EuiButton onClick={closeIntegrationFlyout}>Close</EuiButton>
-              </EuiFlexItem>
-            </EuiFlexGroup>
-          </EuiFlyoutFooter>
-        }
-        ariaLabel="pplReferenceFlyout"
-      />
-    );
-  }
-
   let flyout;
   if (isFlyoutVisible) {
     flyout = <PPLReferenceFlyout module="explorer" closeFlyout={closeFlyout} />;
@@ -265,7 +207,7 @@ export const CreateApp = (props: CreateAppProps) => {
   };
 
   const redirectOnCancel =
-    appType === INTEGRATION ? 'integrations/plugins' : 'application_analytics';
+    appType === INTEGRATION.integration ? 'integrations/plugins' : 'application_analytics';
   const onCancel = () => {
     clearStorage();
     window.location.assign(`${last(parentBreadcrumbs)!.href}${redirectOnCancel}`);
@@ -376,9 +318,8 @@ export const CreateApp = (props: CreateAppProps) => {
             )}
           </EuiFlexGroup>
         </EuiPageBody>
-        {appType === INTEGRATION && renderDocument(appName)}
+        {appType === INTEGRATION.integration && renderDocument(appName)}
       </EuiPage>
-      {integrationFlyout}
       {flyout}
     </div>
   );

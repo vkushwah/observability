@@ -68,9 +68,10 @@ export function AppTable(props: AppTableProps) {
   const [isActionsPopoverOpen, setIsActionsPopoverOpen] = useState(false);
   const [modalLayout, setModalLayout] = useState(<EuiOverlayMask />);
   const [selectedApplications, setSelectedApplications] = useState<ApplicationType[]>([]);
-  const createButtonText = appType === INTEGRATION ? 'Add Integration' : 'Create application';
+  const createButtonText =
+    appType === INTEGRATION.integration ? 'Add Integration' : 'Create application';
   const breadCrumbs =
-    appType === INTEGRATION
+    appType === INTEGRATION.integration
       ? {
           text: 'Integrations',
           href: '#/integrations/plugins',
@@ -218,7 +219,8 @@ export function AppTable(props: AppTableProps) {
     }
   };
 
-  const appLink = appType === INTEGRATION ? '#/integrations/plugins/' : '#/application_analytics/';
+  const appLink =
+    appType === INTEGRATION.integration ? '#/integrations/plugins/' : '#/application_analytics/';
   const tableColumns = [
     {
       field: 'name',
@@ -259,7 +261,9 @@ export function AppTable(props: AppTableProps) {
   ] as Array<EuiTableFieldDataColumnType<ApplicationType>>;
 
   const allApps =
-    appType === INTEGRATION ? '#/integrations/plugins/all_apps' : '#/application_analytics/create';
+    appType === INTEGRATION.integration
+      ? '#/integrations/plugins/all_apps'
+      : '#/application_analytics/create';
 
   return (
     <div style={pageStyles}>
@@ -268,14 +272,14 @@ export function AppTable(props: AppTableProps) {
           <EuiPageHeader>
             <EuiPageHeaderSection>
               <EuiTitle size="l">
-                {appType === INTEGRATION ? <h1>Integrations</h1> : <h1>Overview</h1>}
+                {appType === INTEGRATION.integration ? <h1>Integrations</h1> : <h1>Overview</h1>}
               </EuiTitle>
             </EuiPageHeaderSection>
           </EuiPageHeader>
           <EuiPageContent id="applicationArea">
             <EuiPageContentHeader>
               <EuiPageContentHeaderSection>
-                {appType !== INTEGRATION && (
+                {appType !== INTEGRATION.integration && (
                   <EuiTitle data-test-subj="applicationHomePageTitle" size="s">
                     <h3>
                       Applications

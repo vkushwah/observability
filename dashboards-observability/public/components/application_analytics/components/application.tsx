@@ -41,8 +41,6 @@ import { Configuration } from './configuration';
 import {
   TAB_CONFIG_ID,
   TAB_CONFIG_TITLE,
-  TAB_INTEGRATION_ID,
-  TAB_INTEGRATION_TITLE,
   TAB_LOG_ID,
   TAB_LOG_TITLE,
   TAB_OVERVIEW_ID,
@@ -51,14 +49,8 @@ import {
   TAB_PANEL_TITLE,
   TAB_SERVICE_ID,
   TAB_SERVICE_TITLE,
-  TAB_TCP_UPSTREAMS_ID,
-  TAB_TCP_UPSTREAMS_TITLE,
-  TAB_TCP_ZONES_ID,
-  TAB_TCP_ZONES_TITLE,
   TAB_TRACE_ID,
   TAB_TRACE_TITLE,
-  TAB_UPSTREAM_ID,
-  TAB_UPSTREAM_TITLE,
 } from '../../../../common/constants/application_analytics';
 import { TAB_EVENT_ID, TAB_CHART_ID, NEW_TAB } from '../../../../common/constants/explorer';
 import { IQueryTab } from '../../../../common/types/explorer';
@@ -75,6 +67,10 @@ import { SpanDetailFlyout } from '../../../../public/components/trace_analytics/
 import { TraceDetailFlyout } from './flyout_components/trace_detail_flyout';
 import { fetchAppById, initializeTabData } from '../helpers/utils';
 import { NginxTab } from '../../integrations/plugins/nginx';
+import {
+  TAB_INTEGRATION_ID,
+  TAB_INTEGRATION_TITLE,
+} from '../../integrations/plugins/nginx/doc/constant';
 import { INTEGRATION } from '../../../../common/constants/shared';
 
 const searchBarConfigs = {
@@ -229,7 +225,7 @@ export function Application(props: AppDetailProps) {
   }, [appId]);
 
   const breadCrumbs =
-    appType === INTEGRATION
+    appType === INTEGRATION.integration
       ? [
           {
             text: 'Integrations',
@@ -299,7 +295,7 @@ export function Application(props: AppDetailProps) {
   };
 
   const childBreadcrumbs =
-    appType === INTEGRATION
+    appType === INTEGRATION.integration
       ? [
           {
             text: 'Integrations',
@@ -560,7 +556,6 @@ export function Application(props: AppDetailProps) {
     };
   }
 
-  let appAnalyticsTabs;
   const integrationTabs = [
     getAppAnalyticsTab({
       tabId: TAB_INTEGRATION_ID,
@@ -616,7 +611,7 @@ export function Application(props: AppDetailProps) {
     }),
   ];
 
-  appAnalyticsTabs = appType === INTEGRATION ? integrationTabs : analyticsTabs;
+  const appAnalyticsTabs = appType === INTEGRATION.integration ? integrationTabs : analyticsTabs;
 
   return (
     <div>

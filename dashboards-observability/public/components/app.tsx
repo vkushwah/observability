@@ -12,7 +12,6 @@ import { CoreStart } from '../../../../src/core/public';
 import { INTEGRATION, observabilityID, observabilityTitle } from '../../common/constants/shared';
 import store from '../framework/redux/store';
 import { AppPluginStartDependencies } from '../types';
-// import { Home as ApplicationAnalyticsHome } from './integrations/plugins/application_analytics/home';
 import { Home as ApplicationAnalyticsHome } from './application_analytics/home';
 import { Home as CustomPanelsHome } from './custom_panels/home';
 import { EventAnalytics } from './event_analytics';
@@ -93,7 +92,7 @@ export const App = ({
                       dslService={dslService}
                       savedObjects={savedObjects}
                       timestampUtils={timestampUtils}
-                      appType={INTEGRATION}
+                      appType={INTEGRATION.integration}
                     />
                   );
                 }}

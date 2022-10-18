@@ -201,13 +201,11 @@ export const PanelGrid = (props: PanelGridProps) => {
   }, []);
 
   const visualizationData =
-    appType === INTEGRATION ? (
+    appType === INTEGRATION.integration ? (
       <EuiFlexGrid columns={2} direction="column">
         {panelVisualizations.map((panelVisualization: VisualizationType, index) => (
-          <EuiFlexItem>
-            <div className="height" key={panelVisualization.id}>
-              {gridData[index]}
-            </div>
+          <EuiFlexItem key={panelVisualization.id}>
+            <div className="height">{gridData[index]}</div>
           </EuiFlexItem>
         ))}
       </EuiFlexGrid>

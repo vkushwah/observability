@@ -58,7 +58,7 @@ export const Configuration = (props: ConfigProps) => {
   };
 
   const location =
-    appType === INTEGRATION
+    appType === INTEGRATION.integration
       ? `integrations/plugins/edit/${appId}?type=integration`
       : `application_analytics/edit/${appId}`;
 

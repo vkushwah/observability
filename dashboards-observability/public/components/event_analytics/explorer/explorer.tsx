@@ -1047,9 +1047,6 @@ export const Explorer = ({
       });
   };
   const handleSavingObject = async () => {
-    // if (appType === INTEGRATION) {
-    //   handleCreatingObject(iAppId, iAppName, itype);
-    // } else {
     const currQuery = queryRef.current;
     const currFields = explorerFieldsRef.current;
     if (isEmpty(currQuery![RAW_QUERY]) && isEmpty(appBaseQuery)) {
@@ -1265,7 +1262,6 @@ export const Explorer = ({
           });
       }
     }
-    //}
   };
 
   const liveTailLoop = async (
@@ -1403,7 +1399,7 @@ export const Explorer = ({
           liveTailName={liveTailNameRef.current}
           searchError={explorerVisualizations}
         />
-        {appType === INTEGRATION ? (
+        {appType === INTEGRATION.integration ? (
           <EuiTabbedContent
             className="mainContentTabs"
             initialSelectedTab={memorizedIntegrationContentTabs[0]}

@@ -585,7 +585,7 @@ export const CustomPanelView = (props: CustomPanelViewProps) => {
           </EuiPageHeader>
           <EuiPageContentBody>
             <EuiFlexGroup gutterSize="s">
-              {appType !== INTEGRATION && (
+              {appType !== INTEGRATION.integration && (
                 <EuiFlexItem>
                   <Autocomplete
                     key={'autocomplete-search-bar'}

@@ -1,3 +1,6 @@
+export const TAB_INTEGRATION_ID = 'request-response';
+export const TAB_INTEGRATION_TITLE = 'Request/Response';
+
 export enum NginxConfig {
   STEP_1 = 'Step 1',
   STEP_2 = 'Step 2',
