@@ -38,6 +38,7 @@ import org.opensearch.observability.util.logger
  *   ],
  *   "panelId": "rgfQfn4BCe7Q1SIYgrrj",
  *   "availabilityVisId": "co-Ha38BD0LU9um06tQP"
+ *   "appType": "application"
  * }</pre>
  */
 
@@ -48,7 +49,8 @@ internal data class Application(
     val servicesEntities: List<String>?,
     val traceGroups: List<String>?,
     val panelId: String?,
-    val availabilityVisId: String?
+    val availabilityVisId: String?,
+    val appType: String?
 ) : BaseObjectData {
 
     internal companion object {
@@ -60,6 +62,7 @@ internal data class Application(
         private const val TRACE_GROUPS_TAG = "traceGroups"
         private const val PANEL_ID_TAG = "panelId"
         private const val AVAILABILITY_VIS_ID_TAG = "availabilityVisId"
+        private const val APP_TYPE = "appType"
 
         /**
          * reader to create instance of class from writable.
@@ -84,6 +87,7 @@ internal data class Application(
             var traceGroups: List<String>? = null
             var panelId: String? = null
             var availabilityVisId: String? = null
+            var appType: String? = null
             XContentParserUtils.ensureExpectedToken(
                 XContentParser.Token.START_OBJECT,
                 parser.currentToken(),
@@ -100,13 +104,14 @@ internal data class Application(
                     TRACE_GROUPS_TAG -> traceGroups = parser.stringList()
                     PANEL_ID_TAG -> panelId = parser.text()
                     AVAILABILITY_VIS_ID_TAG -> availabilityVisId = parser.text()
+                    APP_TYPE -> appType = parser.text()
                     else -> {
                         parser.skipChildren()
                         log.info("$LOG_PREFIX:Application Skipping Unknown field $fieldName")
                     }
                 }
             }
-            return Application(name, description, baseQuery, servicesEntities, traceGroups, panelId, availabilityVisId)
+            return Application(name, description, baseQuery, servicesEntities, traceGroups, panelId, availabilityVisId, appType)
         }
     }
 
@@ -131,6 +136,7 @@ internal data class Application(
         traceGroups = input.readStringList(),
         panelId = input.readString(),
         availabilityVisId = input.readString()
+        appType = input.readString()
     )
 
     /**
@@ -144,6 +150,7 @@ internal data class Application(
         output.writeStringCollection(traceGroups)
         output.writeString(panelId)
         output.writeString(availabilityVisId)
+        output.writeString(appType)
     }
 
     /**
@@ -159,6 +166,7 @@ internal data class Application(
             .fieldIfNotNull(TRACE_GROUPS_TAG, traceGroups)
             .fieldIfNotNull(PANEL_ID_TAG, panelId)
             .fieldIfNotNull(AVAILABILITY_VIS_ID_TAG, availabilityVisId)
+            .fieldIfNotNull(APP_TYPE, appType)
         return builder.endObject()
     }
 }
